@@ -153,6 +153,9 @@ if submitted:
 
         # Ensure matches is a DataFrame
         if isinstance(matches, pd.DataFrame) and not matches.empty:
+            # Create explicit copy to avoid SettingWithCopyWarning
+            matches = matches.copy()
+            
             # 1. Gather all unique IDs as strings
             all_ids = pd.unique(matches[["pitcher", "batter"]].values.ravel())
             # all_ids = [int(x) for x in all_ids if x is not None]
