@@ -17,8 +17,8 @@ def refresh_data():
 
 refresh_data()  # runs once per app session
 
-INDEX_PATH = "data/atbat_pitch_sequence_index.parquet"
-SEASON_INDEX_PATTERN = "data/atbat_pitch_sequence_index_{year}.parquet"
+INDEX_PATH = "pitch_prospector/data/atbat_pitch_sequence_index.parquet"
+SEASON_INDEX_PATTERN = "pitch_prospector/data/atbat_pitch_sequence_index_{year}.parquet"
 
 st.title("At-Bat Sequence Finder")
 st.markdown("Pick a date range to filter historical at-bats.")

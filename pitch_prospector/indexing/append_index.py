@@ -7,8 +7,8 @@ from indexing.pitch_index import process_file
 from datetime import datetime
 from tqdm import tqdm
 
-DATA_DIR = "data/statcast_monthly"
-INDEX_PATH = "data/atbat_pitch_sequence_index.parquet"
+DATA_DIR = "pitch_prospector/data/statcast_monthly"
+INDEX_PATH = "pitch_prospector/data/atbat_pitch_sequence_index.parquet"
 
 def get_latest_index_month(index_path):
     if not os.path.exists(index_path):
@@ -54,7 +54,7 @@ def append_index_by_month():
         if "game_year" not in new_df.columns:
             new_df["game_year"] = pd.to_datetime(new_df["game_date"]).dt.year
         for year, group in new_df.groupby("game_year"):
-            season_path = f"data/atbat_pitch_sequence_index_{year}.parquet"
+            season_path = f"pitch_prospector/data/atbat_pitch_sequence_index_{year}.parquet"
             if os.path.exists(season_path):
                 season_df = pd.read_parquet(season_path)
                 season_combined = pd.concat([season_df, group], ignore_index=True)

@@ -18,7 +18,7 @@ warnings.filterwarnings(
 )
 
 
-DATA_DIR = "data/statcast_monthly"
+DATA_DIR = "pitch_prospector/data/statcast_monthly"
 START_YEAR = 2015
 NOW = datetime.now()
 

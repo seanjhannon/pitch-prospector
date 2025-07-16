@@ -8,8 +8,8 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 from tqdm import tqdm
 
 
-DATA_DIR = "data/statcast_monthly"
-INDEX_PATH = "data/atbat_pitch_sequence_index.parquet"
+DATA_DIR = "pitch_prospector/data/statcast_monthly"
+INDEX_PATH = "pitch_prospector/data/atbat_pitch_sequence_index.parquet"
 
 def build_index():
     print(f"🔄 Rebuilding pitch index from all files in: {DATA_DIR}")
@@ -40,7 +40,7 @@ def build_index():
     if "game_year" not in df.columns:
         df["game_year"] = pd.to_datetime(df["game_date"]).dt.year
     for year, group in df.groupby("game_year"):
-        season_path = f"data/atbat_pitch_sequence_index_{year}.parquet"
+        season_path = f"pitch_prospector/data/atbat_pitch_sequence_index_{year}.parquet"
         group.to_parquet(season_path, index=False)
         print(f"✅ Season {year}: {len(group):,} at-bats saved to {season_path}")
 
