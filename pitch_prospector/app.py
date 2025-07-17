@@ -22,7 +22,7 @@ ensure_db_initialized()
 from pitch_prospector.indexing.cloud_refresh import refresh_sqlite_db
 
 # Automatically refresh data if DB is empty (last 7 days)
-today = datetime.datetime.today()
+today = datetime.today()
 recent_records = get_atbats_by_date_range(str(today.date() - datetime.timedelta(days=7)), str(today.date()))
 if not recent_records:
     with st.spinner("Loading data from Statcast for first use..."):
