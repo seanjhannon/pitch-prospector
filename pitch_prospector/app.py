@@ -2,7 +2,7 @@ import streamlit as st
 import pandas as pd
 import os
 import hashlib
-from datetime import datetime
+from datetime import datetime, timedelta
 from pybaseball import playerid_reverse_lookup
 import numpy as np
 
@@ -23,7 +23,7 @@ from pitch_prospector.indexing.cloud_refresh import refresh_sqlite_db
 
 # Automatically refresh data if DB is empty (last 7 days)
 today = datetime.today()
-recent_records = get_atbats_by_date_range(str(today.date() - datetime.timedelta(days=7)), str(today.date()))
+recent_records = get_atbats_by_date_range(str(today.date() - timedelta(days=7)), str(today.date()))
 if not recent_records:
     with st.spinner("Loading data from Statcast for first use..."):
         refresh_sqlite_db()
