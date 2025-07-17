@@ -20,9 +20,12 @@ COLUMNS_TO_KEEP = [
     "home_score", "away_score", "bat_score", "fld_score"
 ]
 
-def process_file(fpath, existing_keys=None):
+def process_file(data_or_path, existing_keys=None):
     try:
-        df = pd.read_parquet(fpath)
+        if isinstance(data_or_path, pd.DataFrame):
+            df = data_or_path
+        else:
+            df = pd.read_parquet(data_or_path)
         cols_available = [col for col in COLUMNS_TO_KEEP if col in df.columns]
         df = df[cols_available]
         df = df.sort_values(by=["game_pk", "at_bat_number", "pitch_number"])
@@ -52,7 +55,7 @@ def process_file(fpath, existing_keys=None):
             })
         return rows
     except Exception as e:
-        print(f"❌ Failed to load {fpath}: {e}")
+        print(f"❌ Failed to load {type(data_or_path)}: {e}")
         return []
 
 def process_all_files(data_dir, existing_keys=None, max_workers=4):
