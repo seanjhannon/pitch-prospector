@@ -19,6 +19,11 @@ def ensure_db_initialized():
 
 ensure_db_initialized()
 
+from pitch_prospector.indexing.cloud_refresh import refresh_sqlite_db
+
+if st.button("Refresh Data from Statcast"):
+    refresh_sqlite_db()
+
 st.title("At-Bat Sequence Finder")
 st.markdown("Pick a date range to filter historical at-bats.")
 
