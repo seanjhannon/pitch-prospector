@@ -197,11 +197,15 @@ if submitted:
                 all_ids.add(str(row["pitcher"]))  # Convert to string
                 all_ids.add(str(row["batter"]))   # Convert to string
             
+            # Debug: see what IDs we're working with
+            st.write("Debug - Player IDs:", list(all_ids)[:5])  # Show first 5 IDs
+            
             try:
                 lookup_df = playerid_reverse_lookup(list(all_ids))
                 lookup_df["full_name"] = lookup_df["name_first"] + " " + lookup_df["name_last"]
                 lookup_df["key_mlbam"] = lookup_df["key_mlbam"].astype(str)
                 name_lookup = lookup_df.set_index("key_mlbam")["full_name"]
+                st.write("Debug - Lookup successful, found names for:", len(lookup_df), "players")
             except Exception as e:
                 st.warning(f"Could not load player names: {e}")
                 name_lookup = {}
@@ -209,10 +213,29 @@ if submitted:
             for row in matches:
                 pitcher_id = str(row["pitcher"])
                 batter_id = str(row["batter"])
-                row["pitcher_name"] = name_lookup.get(pitcher_id, f"Player {pitcher_id}")
-                row["batter_name"] = name_lookup.get(batter_id, f"Player {batter_id}")
-                row["pitcher_img"] = f"https://securea.mlb.com/mlb/images/players/head_shot/{pitcher_id}.jpg"
-                row["batter_img"] = f"https://securea.mlb.com/mlb/images/players/head_shot/{batter_id}.jpg"
+                
+                # Clean up the ID display - if it looks like bytes, extract the number
+                def clean_id(id_str):
+                    if id_str.startswith("B'") and id_str.endswith("'"):
+                        # Extract the numeric part from bytes representation
+                        try:
+                            # Convert bytes back to integer
+                            import ast
+                            bytes_obj = ast.literal_eval(id_str)
+                            if isinstance(bytes_obj, bytes):
+                                # Convert bytes to integer (little endian)
+                                return str(int.from_bytes(bytes_obj, byteorder='little'))
+                        except:
+                            pass
+                    return id_str
+                
+                clean_pitcher_id = clean_id(pitcher_id)
+                clean_batter_id = clean_id(batter_id)
+                
+                row["pitcher_name"] = name_lookup.get(clean_pitcher_id, f"Player {clean_pitcher_id}")
+                row["batter_name"] = name_lookup.get(clean_batter_id, f"Player {clean_batter_id}")
+                row["pitcher_img"] = f"https://securea.mlb.com/mlb/images/players/head_shot/{clean_pitcher_id}.jpg"
+                row["batter_img"] = f"https://securea.mlb.com/mlb/images/players/head_shot/{clean_batter_id}.jpg"
 
                 def build_statcast_url(row):
                     game_date_str = pd.to_datetime(row['game_date']).date()
