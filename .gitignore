@@ -1,0 +1,2 @@
+# Ignore SQLite database
+pitch_prospector/data/pitchprospector.sqlite 
