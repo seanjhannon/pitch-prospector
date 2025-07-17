@@ -7,6 +7,8 @@ from pitch_prospector.db import get_atbats_by_date_range, get_atbats_by_sequence
 from pitch_prospector.indexing.pitch_index import process_file, insert_new_data_from_indexed_rows
 from pitch_prospector.db import init_db_main
 from pybaseball import playerid_reverse_lookup, statcast
+import warnings
+warnings.filterwarnings("ignore", category=FutureWarning)
 
 DB_PATH = "pitch_prospector/data/pitchprospector.sqlite"
 
