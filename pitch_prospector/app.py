@@ -26,6 +26,7 @@ if not recent_records:
     # Check if Parquet files exist
     parquet_files = glob.glob("pitch_prospector/data/atbat_pitch_sequence_index_*.parquet")
     if parquet_files:
+        st.write("got here")
         with st.spinner("Migrating Parquet data to SQLite for first use..."):
             from scripts.migrate_parquet_to_sqlite import migrate
             migrate()
