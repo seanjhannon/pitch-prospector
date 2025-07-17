@@ -6,6 +6,7 @@ import os
 import pandas as pd
 import hashlib
 from concurrent.futures import ThreadPoolExecutor, as_completed
+import sqlite3
 
 COLUMNS_TO_KEEP = [
     "game_date", "game_year", "game_pk",
@@ -72,3 +73,51 @@ def load_existing_keys(index_path):
         return set()
     df = pd.read_parquet(index_path, columns=["game_pk", "at_bat_number"])
     return set(zip(df["game_pk"], df["at_bat_number"]))
+
+def insert_new_data_from_indexed_rows(rows):
+    from pitch_prospector.db import DB_PATH
+    conn = sqlite3.connect(DB_PATH)
+    cur = conn.cursor()
+    inserted = 0
+    for row in rows:
+        try:
+            cur.execute(
+                """
+                INSERT OR IGNORE INTO atbats (game_pk, at_bat_number, game_date, batter, pitcher, inning, pitch_sequence_hash)
+                VALUES (?, ?, ?, ?, ?, ?, ?)
+                """,
+                (
+                    row["game_pk"],
+                    row["at_bat_number"],
+                    str(row["game_date"].date()) if hasattr(row["game_date"], "date") else str(row["game_date"]),
+                    row["batter"],
+                    row["pitcher"],
+                    row["inning"],
+                    row["pitch_sequence_hash"]
+                )
+            )
+            cur.execute("SELECT id FROM atbats WHERE game_pk=? AND at_bat_number=?", (row["game_pk"], row["at_bat_number"]))
+            atbat_id = cur.fetchone()[0]
+            for i, pitch in enumerate(row["pitch_sequence"]):
+                pitch_type, description = pitch
+                pitch_level_data = row["pitch_level_data"][i]
+                cur.execute(
+                    """
+                    INSERT INTO pitch_sequences (atbat_id, pitch_order, pitch_type, description, release_speed, zone)
+                    VALUES (?, ?, ?, ?, ?, ?)
+                    """,
+                    (
+                        atbat_id,
+                        i,
+                        pitch_type,
+                        description,
+                        pitch_level_data.get("release_speed"),
+                        pitch_level_data.get("zone")
+                    )
+                )
+            inserted += 1
+        except Exception as e:
+            print(f"❌ Error processing atbat {row['game_pk']}-{row['at_bat_number']}: {e}")
+    conn.commit()
+    conn.close()
+    return inserted

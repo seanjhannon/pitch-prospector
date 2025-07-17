@@ -1,74 +1,116 @@
 import streamlit as st
-import pandas as pd
-import os
-import hashlib
 from datetime import datetime, timedelta
-from pybaseball import playerid_reverse_lookup
-import numpy as np
-import glob
-
+import pandas as pd
+import hashlib
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from pitch_prospector.db import get_atbats_by_date_range, get_atbats_by_sequence_hash, get_pitch_sequences_for_atbat
+from pitch_prospector.indexing.pitch_index import process_file, insert_new_data_from_indexed_rows
+from pitch_prospector.db import init_db_main
+from pybaseball import playerid_reverse_lookup, statcast
 
 DB_PATH = "pitch_prospector/data/pitchprospector.sqlite"
 
+# --- DB Initialization ---
 def ensure_db_initialized():
-    from scripts.init_db import main as init_db_main
     with st.spinner("Ensuring database schema..."):
         init_db_main(DB_PATH)
-    if not os.path.exists(DB_PATH):
-        st.success("Database initialized! Use the refresh button to load data.")
-
 ensure_db_initialized()
 
-# Check if DB is empty
-recent_records = get_atbats_by_date_range("2015-01-01", str(datetime.today().date()))
-if not recent_records:
-    # Check if Parquet files exist
-    parquet_files = glob.glob("pitch_prospector/data/atbat_pitch_sequence_index_*.parquet")
-    if parquet_files:
-        st.write("got here")
-        with st.spinner("Migrating Parquet data to SQLite for first use..."):
-            from scripts.migrate_parquet_to_sqlite import migrate
-            migrate()
-        st.success("Parquet data migrated! You can now use the app.")
+# --- Helper: Check if DB is empty ---
+def db_is_empty():
+    records = get_atbats_by_date_range("2015-01-01", str(datetime.today().date()))
+    return not records
+
+# --- Helper: Get current MLB season range ---
+def get_current_season_range():
+    today = datetime.today()
+    start = datetime(today.year, 3, 1)  # MLB season typically starts in March
+    end = today
+    return start, end
+
+def fetch_process_month(year, month):
+    start = datetime(year, month, 1)
+    if month == 12:
+        end = datetime(year + 1, 1, 1)
     else:
-        from pitch_prospector.indexing.cloud_refresh import refresh_sqlite_db
-        with st.spinner("Loading data from Statcast for first use..."):
-            refresh_sqlite_db()
+        end = datetime(year, month + 1, 1)
+    df = pd.DataFrame()
+    try:
+        from pybaseball import statcast
+        df = statcast(start.strftime("%Y-%m-%d"), (end - timedelta(days=1)).strftime("%Y-%m-%d"))
+    except Exception as e:
+        print(f"Error fetching {year}-{month:02d}: {e}")
+    if df.empty:
+        return []
+    atbat_rows = process_file(df)
+    return atbat_rows
 
-from pitch_prospector.indexing.cloud_refresh import refresh_sqlite_db
+# --- Populate current season on startup if needed ---
+def populate_current_season():
+    start, end = get_current_season_range()
+    months = pd.date_range(start, end, freq='MS')
+    all_atbat_rows = []
+    with ThreadPoolExecutor() as executor:
+        futures = [executor.submit(fetch_process_month, d.year, d.month) for d in months]
+        for f in as_completed(futures):
+            atbat_rows = f.result()
+            if atbat_rows:
+                all_atbat_rows.extend(atbat_rows)
+    if all_atbat_rows:
+        insert_new_data_from_indexed_rows(all_atbat_rows)
 
-if st.button("Refresh Data from Statcast"):
-    refresh_sqlite_db()
+if db_is_empty():
+    with st.spinner("Loading current MLB season data (first use)..."):
+        populate_current_season()
+    st.success("Current season loaded! You can now use the app.")
 
+# --- On-demand fetch for user-selected date range ---
+def fetch_and_insert_for_range(start_date, end_date):
+    months = pd.date_range(start_date, end_date, freq='MS')
+    all_atbat_rows = []
+    with ThreadPoolExecutor() as executor:
+        futures = [executor.submit(fetch_process_month, d.year, d.month) for d in months]
+        for f in as_completed(futures):
+            atbat_rows = f.result()
+            if atbat_rows:
+                all_atbat_rows.extend(atbat_rows)
+    if all_atbat_rows:
+        insert_new_data_from_indexed_rows(all_atbat_rows)
+
+# --- UI ---
 st.title("At-Bat Sequence Finder")
 st.markdown("Pick a date range to filter historical at-bats.")
-
-from datetime import datetime, timedelta
-
-today = datetime.today()
-two_years_ago = today.replace(year=today.year - 2)
 
 col1, col2 = st.columns(2)
 with col1:
     start_date = st.date_input(
         "Start date",
-        value=two_years_ago,
+        value=get_current_season_range()[0],
         min_value=datetime(2015, 1, 1),
-        max_value=today
+        max_value=datetime.today()
     )
 with col2:
     end_date = st.date_input(
         "End date",
-        value=today,
+        value=datetime.today(),
         min_value=start_date,
-        max_value=today
+        max_value=datetime.today()
     )
 
-start_date = pd.to_datetime(start_date)
-end_date = pd.to_datetime(end_date)
+# If user selects a range outside the current season, fetch missing months
+def range_needs_fetch(start_date, end_date):
+    current_start, current_end = get_current_season_range()
+    # st.write(type(current_start), type(current_end), type(start_date), type(end_date))
+    return start_date < current_start.date() or end_date > current_end.date()
 
-atbat_records = get_atbats_by_date_range(str(start_date.date()), str(end_date.date()))
+if range_needs_fetch(start_date, end_date):
+    if st.button("Fetch Data for Selected Range"):
+        with st.spinner("Fetching and processing data for selected range..."):
+            fetch_and_insert_for_range(start_date, end_date)
+        st.success("Data for selected range loaded!")
+
+# --- Query and display at-bats as before ---
+atbat_records = get_atbats_by_date_range(str(start_date), str(end_date))
 if not atbat_records:
     st.error("No at-bats found for the selected date range.")
     st.stop()
@@ -144,7 +186,8 @@ if submitted:
         hash_input = str(sequence).encode("utf-8")
         sequence_hash = hashlib.sha1(hash_input).hexdigest()
 
-        matches = get_atbats_by_sequence_hash(sequence_hash)
+        # Only consider at-bats in the selected date range
+        matches = [row for row in atbat_records if row["pitch_sequence_hash"] == sequence_hash]
 
         if matches:
             all_ids = set()
