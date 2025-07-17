@@ -8,6 +8,16 @@ import numpy as np
 
 from pitch_prospector.db import get_atbats_by_date_range, get_atbats_by_sequence_hash, get_pitch_sequences_for_atbat
 
+DB_PATH = "pitch_prospector/data/pitchprospector.sqlite"
+
+def ensure_db_initialized():
+    from scripts.init_db import main as init_db_main
+    with st.spinner("Ensuring database schema..."):
+        init_db_main(DB_PATH)
+    if not os.path.exists(DB_PATH):
+        st.success("Database initialized! Use the refresh button to load data.")
+
+ensure_db_initialized()
 
 st.title("At-Bat Sequence Finder")
 st.markdown("Pick a date range to filter historical at-bats.")
