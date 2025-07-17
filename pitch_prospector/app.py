@@ -194,18 +194,25 @@ if submitted:
         if matches:
             all_ids = set()
             for row in matches:
-                all_ids.add(row["pitcher"])
-                all_ids.add(row["batter"])
-            lookup_df = playerid_reverse_lookup(list(all_ids))
-            lookup_df["full_name"] = lookup_df["name_first"] + " " + lookup_df["name_last"]
-            lookup_df["key_mlbam"] = lookup_df["key_mlbam"].astype(str)
-            name_lookup = lookup_df.set_index("key_mlbam")["full_name"]
+                all_ids.add(str(row["pitcher"]))  # Convert to string
+                all_ids.add(str(row["batter"]))   # Convert to string
+            
+            try:
+                lookup_df = playerid_reverse_lookup(list(all_ids))
+                lookup_df["full_name"] = lookup_df["name_first"] + " " + lookup_df["name_last"]
+                lookup_df["key_mlbam"] = lookup_df["key_mlbam"].astype(str)
+                name_lookup = lookup_df.set_index("key_mlbam")["full_name"]
+            except Exception as e:
+                st.warning(f"Could not load player names: {e}")
+                name_lookup = {}
 
             for row in matches:
-                row["pitcher_name"] = name_lookup.get(str(row["pitcher"]), str(row["pitcher"]))
-                row["batter_name"] = name_lookup.get(str(row["batter"]), str(row["batter"]))
-                row["pitcher_img"] = f"https://securea.mlb.com/mlb/images/players/head_shot/{row['pitcher']}.jpg"
-                row["batter_img"] = f"https://securea.mlb.com/mlb/images/players/head_shot/{row['batter']}.jpg"
+                pitcher_id = str(row["pitcher"])
+                batter_id = str(row["batter"])
+                row["pitcher_name"] = name_lookup.get(pitcher_id, f"Player {pitcher_id}")
+                row["batter_name"] = name_lookup.get(batter_id, f"Player {batter_id}")
+                row["pitcher_img"] = f"https://securea.mlb.com/mlb/images/players/head_shot/{pitcher_id}.jpg"
+                row["batter_img"] = f"https://securea.mlb.com/mlb/images/players/head_shot/{batter_id}.jpg"
 
                 def build_statcast_url(row):
                     game_date_str = pd.to_datetime(row['game_date']).date()
