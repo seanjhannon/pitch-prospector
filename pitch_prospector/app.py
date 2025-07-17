@@ -5,6 +5,7 @@ import hashlib
 from datetime import datetime, timedelta
 from pybaseball import playerid_reverse_lookup
 import numpy as np
+import glob
 
 from pitch_prospector.db import get_atbats_by_date_range, get_atbats_by_sequence_hash, get_pitch_sequences_for_atbat
 
@@ -19,14 +20,22 @@ def ensure_db_initialized():
 
 ensure_db_initialized()
 
-from pitch_prospector.indexing.cloud_refresh import refresh_sqlite_db
-
-# Automatically refresh data if DB is empty (last 7 days)
-today = datetime.today()
-recent_records = get_atbats_by_date_range(str(today.date() - timedelta(days=7)), str(today.date()))
+# Check if DB is empty
+recent_records = get_atbats_by_date_range("2015-01-01", str(datetime.today().date()))
 if not recent_records:
-    with st.spinner("Loading data from Statcast for first use..."):
-        refresh_sqlite_db()
+    # Check if Parquet files exist
+    parquet_files = glob.glob("pitch_prospector/data/atbat_pitch_sequence_index_*.parquet")
+    if parquet_files:
+        with st.spinner("Migrating Parquet data to SQLite for first use..."):
+            from scripts.migrate_parquet_to_sqlite import migrate
+            migrate()
+        st.success("Parquet data migrated! You can now use the app.")
+    else:
+        from pitch_prospector.indexing.cloud_refresh import refresh_sqlite_db
+        with st.spinner("Loading data from Statcast for first use..."):
+            refresh_sqlite_db()
+
+from pitch_prospector.indexing.cloud_refresh import refresh_sqlite_db
 
 if st.button("Refresh Data from Statcast"):
     refresh_sqlite_db()
