@@ -194,8 +194,11 @@ if submitted:
         if matches:
             all_ids = set()
             for row in matches:
-                all_ids.add(str(row["pitcher"]))  # Convert to string
-                all_ids.add(str(row["batter"]))   # Convert to string
+                # Convert bytes to integer IDs
+                pitcher_id = int.from_bytes(row["pitcher"], byteorder='little') if isinstance(row["pitcher"], bytes) else row["pitcher"]
+                batter_id = int.from_bytes(row["batter"], byteorder='little') if isinstance(row["batter"], bytes) else row["batter"]
+                all_ids.add(pitcher_id)
+                all_ids.add(batter_id)
             
             # Debug: see what IDs we're working with
             st.write("Debug - Player IDs:", list(all_ids)[:5])  # Show first 5 IDs
@@ -211,31 +214,17 @@ if submitted:
                 name_lookup = {}
 
             for row in matches:
-                pitcher_id = str(row["pitcher"])
-                batter_id = str(row["batter"])
+                # Convert bytes to integer IDs
+                pitcher_id = int.from_bytes(row["pitcher"], byteorder='little') if isinstance(row["pitcher"], bytes) else row["pitcher"]
+                batter_id = int.from_bytes(row["batter"], byteorder='little') if isinstance(row["batter"], bytes) else row["batter"]
                 
-                # Clean up the ID display - if it looks like bytes, extract the number
-                def clean_id(id_str):
-                    if id_str.startswith("B'") and id_str.endswith("'"):
-                        # Extract the numeric part from bytes representation
-                        try:
-                            # Convert bytes back to integer
-                            import ast
-                            bytes_obj = ast.literal_eval(id_str)
-                            if isinstance(bytes_obj, bytes):
-                                # Convert bytes to integer (little endian)
-                                return str(int.from_bytes(bytes_obj, byteorder='little'))
-                        except:
-                            pass
-                    return id_str
+                pitcher_id_str = str(pitcher_id)
+                batter_id_str = str(batter_id)
                 
-                clean_pitcher_id = clean_id(pitcher_id)
-                clean_batter_id = clean_id(batter_id)
-                
-                row["pitcher_name"] = name_lookup.get(clean_pitcher_id, f"Player {clean_pitcher_id}")
-                row["batter_name"] = name_lookup.get(clean_batter_id, f"Player {clean_batter_id}")
-                row["pitcher_img"] = f"https://securea.mlb.com/mlb/images/players/head_shot/{clean_pitcher_id}.jpg"
-                row["batter_img"] = f"https://securea.mlb.com/mlb/images/players/head_shot/{clean_batter_id}.jpg"
+                row["pitcher_name"] = name_lookup.get(pitcher_id_str, f"Player {pitcher_id}")
+                row["batter_name"] = name_lookup.get(batter_id_str, f"Player {batter_id}")
+                row["pitcher_img"] = f"https://securea.mlb.com/mlb/images/players/head_shot/{pitcher_id}.jpg"
+                row["batter_img"] = f"https://securea.mlb.com/mlb/images/players/head_shot/{batter_id}.jpg"
 
                 def build_statcast_url(row):
                     game_date_str = pd.to_datetime(row['game_date']).date()

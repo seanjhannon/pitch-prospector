@@ -81,6 +81,15 @@ def insert_new_data_from_indexed_rows(rows):
     inserted = 0
     for row in rows:
         try:
+            # Debug: check data types
+            if inserted == 0:  # Only print for first row
+                print(f"Debug - batter type: {type(row['batter'])}, value: {row['batter']}")
+                print(f"Debug - pitcher type: {type(row['pitcher'])}, value: {row['pitcher']}")
+            
+            # Ensure batter and pitcher are integers
+            batter_id = int(row["batter"]) if row["batter"] is not None else 0
+            pitcher_id = int(row["pitcher"]) if row["pitcher"] is not None else 0
+            
             cur.execute(
                 """
                 INSERT OR IGNORE INTO atbats (game_pk, at_bat_number, game_date, batter, pitcher, inning, pitch_sequence_hash)
@@ -90,8 +99,8 @@ def insert_new_data_from_indexed_rows(rows):
                     row["game_pk"],
                     row["at_bat_number"],
                     str(row["game_date"].date()) if hasattr(row["game_date"], "date") else str(row["game_date"]),
-                    row["batter"],
-                    row["pitcher"],
+                    batter_id,  # Use converted integer
+                    pitcher_id,  # Use converted integer
                     row["inning"],
                     row["pitch_sequence_hash"]
                 )
