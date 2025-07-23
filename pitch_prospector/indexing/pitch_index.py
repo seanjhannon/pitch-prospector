@@ -75,58 +75,28 @@ def load_existing_keys(index_path):
     return set(zip(df["game_pk"], df["at_bat_number"]))
 
 def insert_new_data_from_indexed_rows(rows):
-    from pitch_prospector.db import DB_PATH
-    conn = sqlite3.connect(DB_PATH)
-    cur = conn.cursor()
-    inserted = 0
+    from pitch_prospector.db import insert_atbats
+    
+    # Prepare atbat rows with pitch_sequence and pitch_level_data included
+    atbat_rows = []
     for row in rows:
-        try:
-            # Debug: check data types
-            if inserted == 0:  # Only print for first row
-                print(f"Debug - batter type: {type(row['batter'])}, value: {row['batter']}")
-                print(f"Debug - pitcher type: {type(row['pitcher'])}, value: {row['pitcher']}")
-            
-            # Ensure batter and pitcher are integers
-            batter_id = int(row["batter"]) if row["batter"] is not None else 0
-            pitcher_id = int(row["pitcher"]) if row["pitcher"] is not None else 0
-            
-            cur.execute(
-                """
-                INSERT OR IGNORE INTO atbats (game_pk, at_bat_number, game_date, batter, pitcher, inning, pitch_sequence_hash)
-                VALUES (?, ?, ?, ?, ?, ?, ?)
-                """,
-                (
-                    row["game_pk"],
-                    row["at_bat_number"],
-                    str(row["game_date"].date()) if hasattr(row["game_date"], "date") else str(row["game_date"]),
-                    batter_id,  # Use converted integer
-                    pitcher_id,  # Use converted integer
-                    row["inning"],
-                    row["pitch_sequence_hash"]
-                )
-            )
-            cur.execute("SELECT id FROM atbats WHERE game_pk=? AND at_bat_number=?", (row["game_pk"], row["at_bat_number"]))
-            atbat_id = cur.fetchone()[0]
-            for i, pitch in enumerate(row["pitch_sequence"]):
-                pitch_type, description = pitch
-                pitch_level_data = row["pitch_level_data"][i]
-                cur.execute(
-                    """
-                    INSERT INTO pitch_sequences (atbat_id, pitch_order, pitch_type, description, release_speed, zone)
-                    VALUES (?, ?, ?, ?, ?, ?)
-                    """,
-                    (
-                        atbat_id,
-                        i,
-                        pitch_type,
-                        description,
-                        pitch_level_data.get("release_speed"),
-                        pitch_level_data.get("zone")
-                    )
-                )
-            inserted += 1
-        except Exception as e:
-            print(f"❌ Error processing atbat {row['game_pk']}-{row['at_bat_number']}: {e}")
-    conn.commit()
-    conn.close()
-    return inserted
+        # Ensure batter and pitcher are integers
+        batter_id = int(row["batter"]) if row["batter"] is not None else 0
+        pitcher_id = int(row["pitcher"]) if row["pitcher"] is not None else 0
+        
+        atbat_rows.append({
+            "game_pk": row["game_pk"],
+            "at_bat_number": row["at_bat_number"],
+            "game_date": str(row["game_date"].date()) if hasattr(row["game_date"], "date") else str(row["game_date"]),
+            "batter": batter_id,
+            "pitcher": pitcher_id,
+            "inning": row["inning"],
+            "pitch_sequence_hash": row["pitch_sequence_hash"],
+            "pitch_sequence": row["pitch_sequence"],
+            "pitch_level_data": row["pitch_level_data"]
+        })
+    
+    # Insert atbats with pitch data included
+    insert_atbats(atbat_rows)
+    
+    return len(atbat_rows)
