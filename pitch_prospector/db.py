@@ -1,80 +1,76 @@
-import sqlite3
-from typing import List, Tuple, Dict, Any
+import os
+import psycopg2
 
-DB_PATH = "pitch_prospector/data/pitchprospector.sqlite"
-
+# --- Connection Setup ---
 def get_connection():
-    return sqlite3.connect(DB_PATH)
-
-def get_atbats_by_date_range(start_date: str, end_date: str) -> List[Dict[str, Any]]:
-    conn = get_connection()
-    cur = conn.cursor()
-    cur.execute(
-        """
-        SELECT * FROM atbats WHERE game_date >= ? AND game_date <= ?
-        """,
-        (start_date, end_date)
+    """
+    Returns a new connection to the Supabase/Postgres database using environment variables:
+    - SUPABASE_DB_HOST
+    - SUPABASE_DB_PORT
+    - SUPABASE_DB_NAME
+    - SUPABASE_DB_USER
+    - SUPABASE_DB_PASSWORD
+    """
+    return psycopg2.connect(
+        host=os.environ["SUPABASE_DB_HOST"],
+        port=os.environ.get("SUPABASE_DB_PORT", 5432),
+        dbname=os.environ["SUPABASE_DB_NAME"],
+        user=os.environ["SUPABASE_DB_USER"],
+        password=os.environ["SUPABASE_DB_PASSWORD"]
     )
-    rows = cur.fetchall()
-    columns = [desc[0] for desc in cur.description]
-    conn.close()
-    return [dict(zip(columns, row)) for row in rows]
 
-def get_atbats_by_sequence_hash(sequence_hash: str) -> List[Dict[str, Any]]:
-    conn = get_connection()
-    cur = conn.cursor()
-    cur.execute(
-        "SELECT * FROM atbats WHERE pitch_sequence_hash = ?",
-        (sequence_hash,)
-    )
-    rows = cur.fetchall()
-    columns = [desc[0] for desc in cur.description]
-    conn.close()
-    return [dict(zip(columns, row)) for row in rows]
+# --- Table Creation ---
+def create_tables():
+    """
+    Creates the atbats and pitch_sequences tables in the connected Postgres database.
+    """
+    create_atbats = """
+    CREATE TABLE IF NOT EXISTS atbats (
+        id SERIAL PRIMARY KEY,
+        game_pk INTEGER,
+        at_bat_number INTEGER,
+        game_date DATE,
+        batter BIGINT,
+        pitcher BIGINT,
+        inning INTEGER,
+        pitch_sequence_hash VARCHAR(40),
+        UNIQUE(game_pk, at_bat_number)
+    );
+    """
+    create_pitch_sequences = """
+    CREATE TABLE IF NOT EXISTS pitch_sequences (
+        id SERIAL PRIMARY KEY,
+        atbat_id INTEGER REFERENCES atbats(id),
+        pitch_order INTEGER,
+        pitch_type VARCHAR(10),
+        description VARCHAR(50),
+        release_speed DECIMAL(4,1),
+        zone INTEGER
+    );
+    """
+    create_indexes = [
+        "CREATE INDEX IF NOT EXISTS idx_pitch_sequence_hash ON atbats(pitch_sequence_hash);",
+        "CREATE INDEX IF NOT EXISTS idx_game_date ON atbats(game_date);"
+    ]
+    with get_connection() as conn:
+        with conn.cursor() as cur:
+            cur.execute(create_atbats)
+            cur.execute(create_pitch_sequences)
+            for idx in create_indexes:
+                cur.execute(idx)
+        conn.commit()
 
-def get_pitch_sequences_for_atbat(atbat_id: int) -> List[Dict[str, Any]]:
-    conn = get_connection()
-    cur = conn.cursor()
-    cur.execute(
-        "SELECT * FROM pitch_sequences WHERE atbat_id = ? ORDER BY pitch_order ASC",
-        (atbat_id,)
-    )
-    rows = cur.fetchall()
-    columns = [desc[0] for desc in cur.description]
-    conn.close()
-    return [dict(zip(columns, row)) for row in rows]
+# --- Main Entrypoint ---
+def main():
+    """
+    Run this script to create the necessary tables in your Supabase/Postgres DB.
+    """
+    print("Creating tables in Supabase/Postgres DB...")
+    create_tables()
+    print("Done.")
 
-def init_db_main(db_path=None):
-    """Initialize the SQLite schema for atbats and pitch_sequences tables."""
-    if db_path is None:
-        db_path = DB_PATH
-    conn = sqlite3.connect(db_path)
-    cur = conn.cursor()
-    cur.execute('''
-        CREATE TABLE IF NOT EXISTS atbats (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            game_pk INTEGER,
-            at_bat_number INTEGER,
-            game_date DATE,
-            batter INTEGER,
-            pitcher INTEGER,
-            inning INTEGER,
-            pitch_sequence_hash VARCHAR(40),
-            UNIQUE(game_pk, at_bat_number)
-        );
-    ''')
-    cur.execute('''
-        CREATE TABLE IF NOT EXISTS pitch_sequences (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            atbat_id INTEGER REFERENCES atbats(id),
-            pitch_order INTEGER,
-            pitch_type VARCHAR(10),
-            description VARCHAR(50),
-            release_speed DECIMAL(4,1),
-            zone INTEGER
-        );
-    ''')
-    cur.execute('CREATE INDEX IF NOT EXISTS idx_pitch_sequence_hash ON atbats(pitch_sequence_hash);')
-    cur.execute('CREATE INDEX IF NOT EXISTS idx_game_date ON atbats(game_date);')
-    conn.commit()
-    conn.close() 
+if __name__ == "__main__":
+    main()
+
+# TODO: Add data access/query functions for the app
+# TODO: Add insert/update helpers for atbats and pitch_sequences 
