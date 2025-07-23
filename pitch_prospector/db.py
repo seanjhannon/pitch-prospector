@@ -74,3 +74,102 @@ if __name__ == "__main__":
 
 # TODO: Add data access/query functions for the app
 # TODO: Add insert/update helpers for atbats and pitch_sequences 
+
+def get_atbats_by_date_range(start_date, end_date):
+    """
+    Fetch atbats between start_date and end_date (inclusive).
+    Returns a list of dicts.
+    """
+    with get_connection() as conn:
+        with conn.cursor() as cur:
+            cur.execute(
+                """
+                SELECT * FROM atbats WHERE game_date >= %s AND game_date <= %s
+                """,
+                (start_date, end_date)
+            )
+            columns = [desc[0] for desc in cur.description]
+            return [dict(zip(columns, row)) for row in cur.fetchall()]
+
+def get_atbats_by_sequence_hash(sequence_hash):
+    """
+    Fetch atbats with a given pitch_sequence_hash.
+    Returns a list of dicts.
+    """
+    with get_connection() as conn:
+        with conn.cursor() as cur:
+            cur.execute(
+                "SELECT * FROM atbats WHERE pitch_sequence_hash = %s",
+                (sequence_hash,)
+            )
+            columns = [desc[0] for desc in cur.description]
+            return [dict(zip(columns, row)) for row in cur.fetchall()]
+
+def get_pitch_sequences_for_atbat(atbat_id):
+    """
+    Fetch pitch sequences for a given atbat_id, ordered by pitch_order.
+    Returns a list of dicts.
+    """
+    with get_connection() as conn:
+        with conn.cursor() as cur:
+            cur.execute(
+                "SELECT * FROM pitch_sequences WHERE atbat_id = %s ORDER BY pitch_order ASC",
+                (atbat_id,)
+            )
+            columns = [desc[0] for desc in cur.description]
+            return [dict(zip(columns, row)) for row in cur.fetchall()]
+
+def insert_atbats(rows):
+    """
+    Insert multiple atbat rows (list of dicts) into the atbats table.
+    Ignores duplicates based on the unique constraint.
+    """
+    if not rows:
+        return 0
+    with get_connection() as conn:
+        with conn.cursor() as cur:
+            for row in rows:
+                cur.execute(
+                    """
+                    INSERT INTO atbats (game_pk, at_bat_number, game_date, batter, pitcher, inning, pitch_sequence_hash)
+                    VALUES (%s, %s, %s, %s, %s, %s, %s)
+                    ON CONFLICT (game_pk, at_bat_number) DO NOTHING
+                    """,
+                    (
+                        row["game_pk"],
+                        row["at_bat_number"],
+                        row["game_date"],
+                        row["batter"],
+                        row["pitcher"],
+                        row["inning"],
+                        row["pitch_sequence_hash"]
+                    )
+                )
+        conn.commit()
+    return len(rows)
+
+def insert_pitch_sequences(rows):
+    """
+    Insert multiple pitch_sequence rows (list of dicts) into the pitch_sequences table.
+    """
+    if not rows:
+        return 0
+    with get_connection() as conn:
+        with conn.cursor() as cur:
+            for row in rows:
+                cur.execute(
+                    """
+                    INSERT INTO pitch_sequences (atbat_id, pitch_order, pitch_type, description, release_speed, zone)
+                    VALUES (%s, %s, %s, %s, %s, %s)
+                    """,
+                    (
+                        row["atbat_id"],
+                        row["pitch_order"],
+                        row["pitch_type"],
+                        row["description"],
+                        row.get("release_speed"),
+                        row.get("zone")
+                    )
+                )
+        conn.commit()
+    return len(rows) 
