@@ -1,12 +1,7 @@
 # pitch_index.py
 
-# Holds all the helpers and reused logic for build_index.py and append_index.py
-
-import os
 import pandas as pd
 import hashlib
-from concurrent.futures import ThreadPoolExecutor, as_completed
-import sqlite3
 
 COLUMNS_TO_KEEP = [
     "game_date", "game_year", "game_pk",
@@ -58,21 +53,6 @@ def process_file(data_or_path, existing_keys=None):
     except Exception as e:
         print(f"❌ Failed to load {type(data_or_path)}: {e}")
         return []
-
-def process_all_files(data_dir, existing_keys=None, max_workers=4):
-    files = [os.path.join(data_dir, f) for f in sorted(os.listdir(data_dir)) if f.endswith(".parquet")]
-    all_rows = []
-    with ThreadPoolExecutor(max_workers=max_workers) as executor:
-        futures = [executor.submit(process_file, fpath, existing_keys) for fpath in files]
-        for future in as_completed(futures):
-            all_rows.extend(future.result())
-    return all_rows
-
-def load_existing_keys(index_path):
-    if not os.path.exists(index_path):
-        return set()
-    df = pd.read_parquet(index_path, columns=["game_pk", "at_bat_number"])
-    return set(zip(df["game_pk"], df["at_bat_number"]))
 
 def insert_new_data_from_indexed_rows(rows):
     from pitch_prospector.db import insert_atbats

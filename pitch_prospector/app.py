@@ -3,9 +3,8 @@ from datetime import datetime, timedelta
 import pandas as pd
 import hashlib
 from concurrent.futures import ThreadPoolExecutor, as_completed
-from pitch_prospector.db import get_atbats_by_date_range, get_atbats_by_sequence_hash, get_pitch_sequences_for_atbat
+from pitch_prospector.db import get_atbats_by_date_range, get_pitch_sequences_for_atbat
 from pitch_prospector.indexing.pitch_index import process_file, insert_new_data_from_indexed_rows
-from pitch_prospector.db import init_db_main
 from pybaseball import playerid_reverse_lookup, statcast
 import warnings
 from dotenv import load_dotenv
@@ -16,15 +15,6 @@ import time
 load_dotenv()
 
 warnings.filterwarnings("ignore", category=FutureWarning)
-
-# --- DB Initialization ---
-def ensure_db_initialized():
-    print("🔄 Ensuring database schema...")
-    start_time = time.time()
-    with st.spinner("Ensuring database schema..."):
-        init_db_main(None)  # No longer needs a path since we're using Supabase
-    print(f"✅ Database schema check completed in {time.time() - start_time:.2f}s")
-ensure_db_initialized()
 
 # --- Helper: Check if DB is reachable and has data ---
 def db_is_available():

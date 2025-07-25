@@ -20,49 +20,6 @@ def get_connection():
         password=os.environ["SUPABASE_DB_PASSWORD"]
     )
 
-# --- Table Creation ---
-def create_tables():
-    """
-    Creates the atbats_simple table in the connected Postgres database.
-    """
-    create_atbats_simple = """
-    CREATE TABLE IF NOT EXISTS atbats_simple (
-        id SERIAL PRIMARY KEY,
-        game_pk BIGINT NOT NULL,
-        at_bat_number INTEGER NOT NULL,
-        game_date DATE NOT NULL,
-        batter BIGINT NOT NULL,
-        pitcher BIGINT NOT NULL,
-        inning INTEGER NOT NULL,
-        pitch_sequence_hash VARCHAR(40) NOT NULL,
-        pitch_sequence JSONB,
-        pitch_level_data JSONB,
-        UNIQUE(game_pk, at_bat_number)
-    );
-    """
-    create_indexes = [
-        "CREATE INDEX IF NOT EXISTS idx_pitch_sequence_hash ON atbats_simple(pitch_sequence_hash);",
-        "CREATE INDEX IF NOT EXISTS idx_game_date ON atbats_simple(game_date);"
-    ]
-    with get_connection() as conn:
-        with conn.cursor() as cur:
-            cur.execute(create_atbats_simple)
-            for idx in create_indexes:
-                cur.execute(idx)
-        conn.commit()
-
-# --- Main Entrypoint ---
-def main():
-    """
-    Run this script to create the necessary tables in your Supabase/Postgres DB.
-    """
-    print("Creating tables in Supabase/Postgres DB...")
-    create_tables()
-    print("Done.")
-
-if __name__ == "__main__":
-    main()
-
 def get_atbats_by_date_range(start_date, end_date):
     """
     Fetch atbats between start_date and end_date (inclusive).
@@ -197,18 +154,4 @@ def insert_atbats(rows):
                 ON CONFLICT (game_pk, at_bat_number) DO NOTHING
             """, atbat_data)
             
-        conn.commit()
-
-def insert_pitch_sequences(rows):
-    """
-    This function is no longer needed with the atbats_simple table.
-    Pitch sequences are now stored as JSONB in the atbats_simple table.
-    """
-    pass
-
-def init_db_main(db_path):
-    """
-    Initialize the database schema.
-    This is a no-op function for backward compatibility.
-    """
-    pass 
+        conn.commit() 
