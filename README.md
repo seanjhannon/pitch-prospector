@@ -1,25 +1,64 @@
 # Pitch Prospector
 
-## Database Setup
+A Streamlit web application for searching MLB at-bat sequences using pitch type and outcome combinations.
 
-The SQLite database file (`pitch_prospector/data/pitchprospector.sqlite`) is **not tracked in git** due to its size. To build or refresh the database:
+## Features
 
-### 1. Initial Migration (from Parquet, if needed)
-If you have Parquet index files, run:
+- **Pitch Sequence Search**: Find historical at-bats matching specific pitch type and outcome sequences
+- **Date Range Filtering**: Search within custom date ranges from 2015 to present
+- **Player Information**: View pitcher and batter details with MLB player images
+- **Statcast Integration**: Direct links to Baseball Savant for detailed pitch analysis
+- **Real-time Data**: Fetches data directly from MLB Statcast API via pybaseball
+
+## Technology Stack
+
+- **Frontend**: Streamlit
+- **Database**: Supabase PostgreSQL
+- **Data Source**: MLB Statcast API (via pybaseball)
+- **Connection**: st-supabase-connection
+
+## Setup
+
+### 1. Environment Setup
 ```bash
-python scripts/init_db.py
-python scripts/migrate_parquet_to_sqlite.py
+# Install dependencies
+poetry install
+
+# Set up environment variables
+cp .streamlit/secrets.toml.example .streamlit/secrets.toml
+# Edit .streamlit/secrets.toml with your Supabase credentials
 ```
 
-### 2. Ongoing Updates (Statcast API)
-Use the in-app refresh button or run the refresh logic:
-```python
-from pitch_prospector.indexing.cloud_refresh import refresh_sqlite_db
-refresh_sqlite_db()
+### 2. Database Setup
+The application uses Supabase PostgreSQL. The database schema is automatically created when you run the data pipeline.
+
+### 3. Data Population
+To populate the database with historical data:
+```bash
+# Run the population script to reach target size (0.4GB)
+poetry run python scripts/populate_to_target_size_v3.py
 ```
 
-This will fetch new data from Statcast and index it into your SQLite DB.
+### 4. Run the Application
+```bash
+poetry run streamlit run pitch_prospector/app.py
+```
 
-## Note
-- The DB file is ignored by git (`.gitignore`).
-- Each developer or deployment should build/populate their own DB as needed.
+## Database Schema
+
+The application uses an optimized schema (`atbats_optimized`) that stores:
+- **Essential fields**: game_pk, at_bat_number, game_date, batter, pitcher, inning
+- **Pitch sequences**: JSONB array of [pitch_type, outcome] pairs
+- **Pitch data**: JSONB array of [release_speed, zone] pairs
+
+## Scripts
+
+- `scripts/populate_to_target_size_v3.py` - Populate database with historical data
+- `scripts/optimized_data_pipeline.py` - Data ingestion pipeline from Statcast API
+
+## Notes
+
+- The application fetches data directly from MLB Statcast API
+- No local data files are required
+- Database is hosted on Supabase cloud
+- Optimized for minimal storage while maintaining search functionality
