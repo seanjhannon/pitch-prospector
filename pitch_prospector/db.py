@@ -1,6 +1,7 @@
 import os
 import psycopg2
 import json
+from .db_pool import get_db_connection
 
 # --- Connection Setup ---
 def get_connection():
@@ -11,6 +12,8 @@ def get_connection():
     - SUPABASE_DB_NAME
     - SUPABASE_DB_USER
     - SUPABASE_DB_PASSWORD
+    
+    DEPRECATED: Use get_db_connection() context manager instead for better performance.
     """
     return psycopg2.connect(
         host=os.environ["SUPABASE_DB_HOST"],
@@ -25,7 +28,7 @@ def get_atbats_by_date_range(start_date, end_date):
     Fetch atbats between start_date and end_date (inclusive).
     Returns a list of dicts.
     """
-    with get_connection() as conn:
+    with get_db_connection() as conn:
         with conn.cursor() as cur:
             cur.execute(
                 """
@@ -48,7 +51,7 @@ def get_atbats_by_sequence_hash(sequence_hash):
     Fetch atbats with a specific pitch sequence hash.
     Returns a list of dicts.
     """
-    with get_connection() as conn:
+    with get_db_connection() as conn:
         with conn.cursor() as cur:
             cur.execute(
                 """
@@ -66,12 +69,36 @@ def get_atbats_by_sequence_hash(sequence_hash):
                 rows = []
             return [dict(zip(columns, row)) for row in rows]
 
+def get_atbats_by_date_and_sequence(start_date, end_date, sequence_hash):
+    """
+    Fetch atbats with specific date range and pitch sequence hash.
+    This is the optimized version that uses database-level filtering.
+    Returns a list of dicts.
+    """
+    with get_db_connection() as conn:
+        with conn.cursor() as cur:
+            cur.execute(
+                """
+                SELECT id, game_pk, at_bat_number, game_date, batter, pitcher, inning, pitch_sequence_hash
+                FROM atbats_simple
+                WHERE game_date BETWEEN %s AND %s AND pitch_sequence_hash = %s
+                ORDER BY game_date DESC, game_pk DESC, at_bat_number DESC
+                """,
+                (start_date, end_date, sequence_hash)
+            )
+            columns = [desc[0] for desc in cur.description]
+            try:
+                rows = cur.fetchall()
+            except:
+                rows = []
+            return [dict(zip(columns, row)) for row in rows]
+
 def get_pitch_sequences_for_atbat(atbat_id):
     """
     Fetch pitch sequence data for a specific at-bat.
     Returns a list of dicts with pitch-level data.
     """
-    with get_connection() as conn:
+    with get_db_connection() as conn:
         with conn.cursor() as cur:
             cur.execute(
                 """
@@ -129,7 +156,7 @@ def insert_atbats(rows):
     if not rows:
         return
     
-    with get_connection() as conn:
+    with get_db_connection() as conn:
         with conn.cursor() as cur:
             atbat_data = []
             for row in rows:

@@ -1,55 +1,151 @@
 import streamlit as st
 from datetime import datetime, timedelta
 import pandas as pd
-import hashlib
-from concurrent.futures import ThreadPoolExecutor, as_completed
-from pitch_prospector.db import get_atbats_by_date_range, get_pitch_sequences_for_atbat
-from pitch_prospector.indexing.pitch_index import process_file, insert_new_data_from_indexed_rows
-from pybaseball import playerid_reverse_lookup, statcast
+from pybaseball import playerid_reverse_lookup
 import warnings
 from dotenv import load_dotenv
 import os
 import time
+import psycopg2
+from pitch_prospector.error_handling import (
+    handle_database_errors, handle_player_lookup_errors, 
+    validate_date_range, validate_pitch_sequence,
+    safe_int_conversion, safe_str_conversion, log_and_display_error
+)
 
 # Load environment variables
 load_dotenv()
 
+from st_supabase_connection import SupabaseConnection
+
+# Initialize connection.
+conn = st.connection("supabase",type=SupabaseConnection)
+
 warnings.filterwarnings("ignore", category=FutureWarning)
 
+# --- Helper functions using official Supabase connection ---
+def get_atbats_by_date_and_sequence_official(start_date, end_date, pitch_sequence):
+    """
+    Fetch atbats with specific date range and pitch sequence using official connection.
+    pitch_sequence should be a list of [pitch_type, outcome] lists (matches database format).
+    """
+    try:
+        print(f"🔍 Searching for sequence: {pitch_sequence}")
+        
+        # First, get at-bats in the date range with a reasonable limit
+        # Start with a smaller limit to avoid overwhelming the connection
+        limit = 10000
+        result = conn.table("atbats_optimized").select(
+            "id, game_pk, at_bat_number, game_date, batter, pitcher, inning, pitch_sequence"
+        ).gte("game_date", start_date).lte("game_date", end_date).limit(limit).execute()
+        
+        if not result.data:
+            print(f"  ❌ No data found in date range {start_date} to {end_date}")
+            return []
+        
+        print(f"  📊 Retrieved {len(result.data)} at-bats (limited to {limit})")
+        
+        # Filter in Python to match the exact sequence
+        matching_atbats = []
+        for atbat in result.data:
+            stored_sequence = atbat.get('pitch_sequence', [])
+            if stored_sequence == pitch_sequence:
+                matching_atbats.append(atbat)
+        
+        print(f"  ✅ Found {len(matching_atbats)} exact matches")
+        
+        # If we found matches, return them
+        if matching_atbats:
+            return matching_atbats
+        
+        # If no matches found, let's debug by showing some sample sequences
+        print(f"  🔍 Debug: No exact matches found. Sample sequences from database:")
+        for i, atbat in enumerate(result.data[:3]):
+            sequence = atbat.get('pitch_sequence', [])
+            print(f"    {i+1}. {sequence}")
+        
+        # Also check if we have any sequences that start with the same pitch
+        first_pitch = pitch_sequence[0] if pitch_sequence else None
+        if first_pitch:
+            similar_sequences = []
+            for atbat in result.data:
+                stored_sequence = atbat.get('pitch_sequence', [])
+                if stored_sequence and len(stored_sequence) > 0 and stored_sequence[0] == first_pitch:
+                    similar_sequences.append(stored_sequence)
+            
+            if similar_sequences:
+                print(f"  🔍 Found {len(similar_sequences)} sequences starting with {first_pitch}")
+                print(f"  🔍 Sample similar sequences:")
+                for i, seq in enumerate(similar_sequences[:3]):
+                    print(f"    {i+1}. {seq}")
+        
+        return matching_atbats
+        
+    except Exception as e:
+        print(f"❌ Error querying atbats: {e}")
+        return []
+
+def get_pitch_sequences_for_atbat_official(atbat_id):
+    """
+    Fetch pitch sequence data for a specific at-bat using official connection.
+    """
+    try:
+        # Use the correct API for st-supabase-connection
+        result = conn.table("atbats_optimized").select(
+            "pitch_sequence, pitch_data"
+        ).eq("id", atbat_id).execute()
+        
+        if result.data and len(result.data) > 0:
+            row = result.data[0]
+            pitch_sequence = row.get('pitch_sequence', [])
+            pitch_data = row.get('pitch_data', [])
+            
+            # Combine pitch sequence with pitch data
+            combined_data = []
+            for i, pitch_tuple in enumerate(pitch_sequence):
+                # Get corresponding pitch data (speed and zone)
+                speed, zone = pitch_data[i] if i < len(pitch_data) else [0, 0]
+                
+                # Extract pitch_type and description from tuple
+                if isinstance(pitch_tuple, (list, tuple)) and len(pitch_tuple) >= 2:
+                    pitch_type, description = pitch_tuple[0], pitch_tuple[1]
+                else:
+                    pitch_type, description = str(pitch_tuple), 'unknown'
+                
+                combined_data.append({
+                    'pitch_type': pitch_type,
+                    'description': description,
+                    'release_speed': speed,
+                    'zone': zone
+                })
+            return combined_data
+        return []
+    except Exception as e:
+        print(f"❌ Error querying pitch sequences: {e}")
+        return []
+
 # --- Helper: Check if DB is reachable and has data ---
+@handle_database_errors
 def db_is_available():
     print("🔍 Checking if database is available...")
     start_time = time.time()
     
-    # Use a simple COUNT query to check if database is reachable and has data
-    import psycopg2
-    conn = psycopg2.connect(
-        host=os.environ["SUPABASE_DB_HOST"],
-        port=os.environ.get("SUPABASE_DB_PORT", 5432),
-        dbname=os.environ["SUPABASE_DB_NAME"],
-        user=os.environ["SUPABASE_DB_USER"],
-        password=os.environ["SUPABASE_DB_PASSWORD"]
-    )
-    
     try:
-        with conn.cursor() as cur:
-            print("  📊 Executing COUNT query...")
-            cur.execute("SELECT COUNT(*) FROM atbats_simple")
-            result = cur.fetchone()
-            if result is None:
-                print("  ❌ Database query returned no results")
-                return False, 0
-            count = result[0]
+        # Use the official Supabase connection to check if database has data
+        result = conn.table("atbats_optimized").select("id", count="exact").limit(1).execute()
+        
+        if result.count is not None:
+            count = result.count
             print(f"  📊 Found {count} records in database")
-            
             has_data = count > 0
             print(f"  ✅ Database availability check completed in {time.time() - start_time:.2f}s")
             return has_data, count
+        else:
+            print("  ❌ Database query returned no results")
+            return False, 0
     except Exception as e:
         print(f"  ❌ Database connection failed: {e}")
         return False, 0
-    finally:
-        conn.close()
 
 # --- Helper: Get current MLB season range ---
 def get_current_season_range():
@@ -58,82 +154,18 @@ def get_current_season_range():
     end = today
     return start, end
 
-def fetch_process_month(year, month):
-    print(f"  🔄 Fetching {year}-{month:02d}...")
-    start_time = time.time()
-    start = datetime(year, month, 1)
-    if month == 12:
-        end = datetime(year + 1, 1, 1)
-    else:
-        end = datetime(year, month + 1, 1)
-    df = pd.DataFrame()
-    try:
-        from pybaseball import statcast
-        df = statcast(start.strftime("%Y-%m-%d"), (end - timedelta(days=1)).strftime("%Y-%m-%d"))
-    except Exception as e:
-        print(f"  ❌ Error fetching {year}-{month:02d}: {e}")
-    if df.empty:
-        print(f"  ⚠️  No data for {year}-{month:02d}")
-        return []
-    print(f"  📊 Processing {len(df)} records for {year}-{month:02d}...")
-    atbat_rows = process_file(df)
-    print(f"  ✅ {year}-{month:02d} completed in {time.time() - start_time:.2f}s ({len(atbat_rows)} at-bats)")
-    return atbat_rows
-
-# --- Populate current season on startup if needed ---
-def populate_current_season():
-    print("🚀 Starting current season population...")
-    start_time = time.time()
-    start, end = get_current_season_range()
-    months = pd.date_range(start, end, freq='MS')
-    print(f"📅 Processing {len(months)} months from {start.strftime('%Y-%m')} to {end.strftime('%Y-%m')}")
-    
-    all_atbat_rows = []
-    with ThreadPoolExecutor() as executor:
-        futures = [executor.submit(fetch_process_month, d.year, d.month) for d in months]
-        for f in as_completed(futures):
-            atbat_rows = f.result()
-            if atbat_rows:
-                all_atbat_rows.extend(atbat_rows)
-    
-    if all_atbat_rows:
-        print(f"📥 Inserting {len(all_atbat_rows)} at-bats...")
-        insert_start = time.time()
-        insert_new_data_from_indexed_rows(all_atbat_rows)
-        print(f"✅ Insertion completed in {time.time() - insert_start:.2f}s")
-    
-    print(f"🎉 Current season population completed in {time.time() - start_time:.2f}s")
-
 print("🚀 Starting app initialization...")
 app_start_time = time.time()
 
 db_available, atbat_count = db_is_available()
-if not db_available:
-    print("📭 Database is empty or unreachable, loading current MLB season data...")
-    with st.spinner("Loading current MLB season data (first use)..."):
-        populate_current_season()
-    st.success("Current season loaded! You can now use the app.")
-else:
+if db_available:
     print("📊 Database has data, ready to use")
+else:
+    print("❌ Database is not available")
+    st.error("Database is not available. Please check your connection settings.")
+    st.stop()
 
 print(f"🎉 App initialization completed in {time.time() - app_start_time:.2f}s")
-
-# --- On-demand fetch for user-selected date range ---
-def fetch_and_insert_for_range(start_date, end_date):
-    print(f"🔄 Fetching data for range {start_date} to {end_date}...")
-    start_time = time.time()
-    months = pd.date_range(start_date, end_date, freq='MS')
-    all_atbat_rows = []
-    with ThreadPoolExecutor() as executor:
-        futures = [executor.submit(fetch_process_month, d.year, d.month) for d in months]
-        for f in as_completed(futures):
-            atbat_rows = f.result()
-            if atbat_rows:
-                all_atbat_rows.extend(atbat_rows)
-    if all_atbat_rows:
-        print(f"📥 Inserting {len(all_atbat_rows)} at-bats...")
-        insert_new_data_from_indexed_rows(all_atbat_rows)
-    print(f"✅ Range fetch completed in {time.time() - start_time:.2f}s")
 
 # --- UI ---
 st.title("At-Bat Sequence Finder")
@@ -159,16 +191,9 @@ with col2:
         max_value=datetime.today()
     )
 
-# If user selects a range outside the current season, fetch missing months
-def range_needs_fetch(start_date, end_date):
-    current_start, current_end = get_current_season_range()
-    return start_date < current_start.date() or end_date > current_end.date()
-
-if range_needs_fetch(start_date, end_date):
-    if st.button("Fetch Data for Selected Range"):
-        with st.spinner("Fetching and processing data for selected range..."):
-            fetch_and_insert_for_range(start_date, end_date)
-        st.success("Data for selected range loaded!")
+# Validate date range
+if not validate_date_range(start_date, end_date):
+    st.stop()
 
 st.markdown("Pick a pitch sequence to find matching historical at-bats.")
 
@@ -236,99 +261,111 @@ with st.form("pitch_sequence_form"):
     submitted = st.form_submit_button("Search")
 
 if submitted:
+    # Validate pitch sequence
+    if not validate_pitch_sequence(pitch_inputs, outcome_inputs):
+        st.stop()
+    
     print(f"🔍 User submitted search for {num_pitches} pitches")
     search_start_time = time.time()
     
     with st.spinner("Searching for matching at-bats..."):
-        # Only query the database when user actually searches
-        print(f"🔍 Querying at-bats for range {start_date} to {end_date}...")
-        query_start_time = time.time()
-        atbat_records = get_atbats_by_date_range(str(start_date), str(end_date))
-        print(f"✅ Query completed in {time.time() - query_start_time:.2f}s, found {len(atbat_records)} at-bats")
-        
-        sequence = tuple((p, o) for p, o in zip(pitch_inputs, outcome_inputs))
-        hash_input = str(sequence).encode("utf-8")
-        sequence_hash = hashlib.sha1(hash_input).hexdigest()
+        try:
+            # Create sequence of lists (pitch_type, outcome) - matches database format
+            sequence = [[p, o] for p, o in zip(pitch_inputs, outcome_inputs)]
 
-        # Only consider at-bats in the selected date range
-        matches = [row for row in atbat_records if row["pitch_sequence_hash"] == sequence_hash]
+            print(f"🔍 Querying atbats for range {start_date} to {end_date} with sequence...")
+            query_start_time = time.time()
+            
+            # Use the optimized query that filters at database level
+            matches = get_atbats_by_date_and_sequence_official(str(start_date), str(end_date), sequence)
+            
+            print(f"✅ Query completed in {time.time() - query_start_time:.2f}s, found {len(matches)} at-bats")
 
-        if matches:
-            all_ids = set()
-            for row in matches:
-                # Player IDs are now integers in Supabase
-                pitcher_id = row["pitcher"]
-                batter_id = row["batter"]
-                all_ids.add(pitcher_id)
-                all_ids.add(batter_id)
-            
-            # Debug: see what IDs we're working with
-            st.write("Debug - Player IDs:", list(all_ids)[:5])  # Show first 5 IDs
-            
-            try:
-                lookup_df = playerid_reverse_lookup(list(all_ids))
-                lookup_df["full_name"] = lookup_df["name_first"] + " " + lookup_df["name_last"]
-                lookup_df["key_mlbam"] = lookup_df["key_mlbam"].astype(str)
-                name_lookup = lookup_df.set_index("key_mlbam")["full_name"]
-                st.write("Debug - Lookup successful, found names for:", len(lookup_df), "players")
-            except Exception as e:
-                st.warning(f"Could not load player names: {e}")
+            if matches:
+                all_ids = set()
+                for row in matches:
+                    # Player IDs are now integers in Supabase
+                    pitcher_id = safe_int_conversion(row["pitcher"])
+                    batter_id = safe_int_conversion(row["batter"])
+                    all_ids.add(pitcher_id)
+                    all_ids.add(batter_id)
+                
+                # Debug: see what IDs we're working with
+                st.write("Debug - Player IDs:", list(all_ids)[:5])  # Show first 5 IDs
+                
+                # Simplified player lookup without decorator
                 name_lookup = {}
+                try:
+                    lookup_df = playerid_reverse_lookup(list(all_ids))
+                    if not lookup_df.empty:
+                        lookup_df["full_name"] = lookup_df["name_first"] + " " + lookup_df["name_last"]
+                        lookup_df["key_mlbam"] = lookup_df["key_mlbam"].astype(str)
+                        name_lookup = lookup_df.set_index("key_mlbam")["full_name"].to_dict()
+                        st.write("Debug - Lookup successful, found names for:", len(name_lookup), "players")
+                    else:
+                        st.warning("No player names found, using player IDs instead")
+                except Exception as e:
+                    st.warning(f"Could not load player names: {e}")
+                    name_lookup = {}
 
-            for row in matches:
-                # Player IDs are now integers in Supabase
-                pitcher_id = row["pitcher"]
-                batter_id = row["batter"]
-                
-                pitcher_id_str = str(pitcher_id)
-                batter_id_str = str(batter_id)
-                
-                row["pitcher_name"] = name_lookup.get(pitcher_id_str, f"Player {pitcher_id}")
-                row["batter_name"] = name_lookup.get(batter_id_str, f"Player {batter_id}")
-                row["pitcher_img"] = f"https://securea.mlb.com/mlb/images/players/head_shot/{pitcher_id}.jpg"
-                row["batter_img"] = f"https://securea.mlb.com/mlb/images/players/head_shot/{batter_id}.jpg"
+                for row in matches:
+                    # Player IDs are now integers in Supabase
+                    pitcher_id = safe_int_conversion(row["pitcher"])
+                    batter_id = safe_int_conversion(row["batter"])
+                    
+                    pitcher_id_str = safe_str_conversion(pitcher_id)
+                    batter_id_str = safe_str_conversion(batter_id)
+                    
+                    row["pitcher_name"] = name_lookup.get(pitcher_id_str, f"Player {pitcher_id}")
+                    row["batter_name"] = name_lookup.get(batter_id_str, f"Player {batter_id}")
+                    row["pitcher_img"] = f"https://securea.mlb.com/mlb/images/players/head_shot/{pitcher_id}.jpg"
+                    row["batter_img"] = f"https://securea.mlb.com/mlb/images/players/head_shot/{batter_id}.jpg"
 
-                def build_statcast_url(row):
-                    game_date_str = pd.to_datetime(row['game_date']).date()
-                    return (
-                        f"https://baseballsavant.mlb.com/statcast_search?"
-                        f"player_type=pitcher&"
-                        f"game_date_gt={game_date_str}&"
-                        f"game_date_lt={game_date_str}&"
-                        f"pitchers_lookup%5B%5D={row['pitcher']}&"
-                        f"batters_lookup%5B%5D={row['batter']}&"
-                        f"hfInn={row['inning']}%7C&"
-                        f"hfSea={pd.to_datetime(row['game_date']).year}%7C"
+                    def build_statcast_url(row):
+                        game_date_str = pd.to_datetime(row['game_date']).date()
+                        return (
+                            f"https://baseballsavant.mlb.com/statcast_search?"
+                            f"player_type=pitcher&"
+                            f"game_date_gt={game_date_str}&"
+                            f"game_date_lt={game_date_str}&"
+                            f"pitchers_lookup%5B%5D={row['pitcher']}&"
+                            f"batters_lookup%5B%5D={row['batter']}&"
+                            f"hfInn={row['inning']}%7C&"
+                            f"hfSea={pd.to_datetime(row['game_date']).year}%7C"
+                        )
+
+                    row["statcast_url"] = build_statcast_url(row)
+
+                    pitch_level_data = get_pitch_sequences_for_atbat_official(row["id"])
+
+                    st.markdown(
+                        f"<div style='text-align: center;'>"
+                        f"<h3>{row['pitcher_name'].title()} vs {row['batter_name'].title()} — {pd.to_datetime(row['game_date']):%B %d, %Y}</h3>"
+                        f"</div>",
+                        unsafe_allow_html=True
                     )
+                    cols = st.columns([1, 6, 1])
+                    with cols[0]:
+                        st.image(row["pitcher_img"], width=75)
+                    with cols[1]:
+                        pitch_cols = st.columns(len(pitch_level_data))
+                        for i, pitch in enumerate(pitch_level_data):
+                            with pitch_cols[i]:
+                                st.markdown(f"<div style='text-align:center;'>"
+                                            f"<strong>{pitch['pitch_type']}</strong><br>"
+                                            f"{pitch['release_speed']} mph<br>"
+                                            f"Zone {int(pitch.get('zone', '–'))}"
+                                            f"</div>", unsafe_allow_html=True)
+                    with cols[2]:
+                        st.image(row["batter_img"], width=75)
 
-                row["statcast_url"] = build_statcast_url(row)
-
-                pitch_level_data = get_pitch_sequences_for_atbat(row["id"])
-
-                st.markdown(
-                    f"<div style='text-align: center;'>"
-                    f"<h3>{row['pitcher_name'].title()} vs {row['batter_name'].title()} — {pd.to_datetime(row['game_date']):%B %d, %Y}</h3>"
-                    f"</div>",
-                    unsafe_allow_html=True
-                )
-                cols = st.columns([1, 6, 1])
-                with cols[0]:
-                    st.image(row["pitcher_img"], width=75)
-                with cols[1]:
-                    pitch_cols = st.columns(len(pitch_level_data))
-                    for i, pitch in enumerate(pitch_level_data):
-                        with pitch_cols[i]:
-                            st.markdown(f"<div style='text-align:center;'>"
-                                        f"<strong>{pitch['pitch_type']}</strong><br>"
-                                        f"{pitch['release_speed']} mph<br>"
-                                        f"Zone {int(pitch.get('zone', '–'))}"
-                                        f"</div>", unsafe_allow_html=True)
-                with cols[2]:
-                    st.image(row["batter_img"], width=75)
-
-                st.markdown(f"<div style='text-align: center;'><a href='{row['statcast_url']}' target='_blank'>🔗 Watch on Statcast</a></div>", unsafe_allow_html=True)
-                st.markdown("---")
-        else:
-            st.subheader("No matching at-bats found.")
+                    st.markdown(f"<div style='text-align: center;'><a href='{row['statcast_url']}' target='_blank'>🔗 Watch on Statcast</a></div>", unsafe_allow_html=True)
+                    st.markdown("---")
+            else:
+                st.subheader("No matching at-bats found.")
+                
+        except Exception as e:
+            log_and_display_error(e, "Search error")
     
     print(f"🎉 Search completed in {time.time() - search_start_time:.2f}s")
+
