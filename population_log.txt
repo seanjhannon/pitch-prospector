@@ -4658,3 +4658,195 @@
 2025-07-30 12:42:59,150 - INFO -     📦 Batch 54/601: Inserting 50 at-bats (attempt 1)
 2025-07-30 12:42:59,263 - INFO - HTTP Request: POST https://xjjwtmcoklsqosxkexqw.supabase.co/rest/v1/atbats_optimized?columns=%22game_pk%22%2C%22pitch_data%22%2C%22pitch_sequence%22%2C%22batter%22%2C%22inning%22%2C%22at_bat_number%22%2C%22game_date%22%2C%22pitcher%22 "HTTP/2 201 Created"
 2025-07-30 12:42:59,263 - INFO -     ✅ Batch 54: Inserted 50 at-bats
+2025-07-30 12:42:59,766 - INFO -     📦 Batch 55/601: Inserting 50 at-bats (attempt 1)
+2025-07-30 12:42:59,857 - INFO - HTTP Request: POST https://xjjwtmcoklsqosxkexqw.supabase.co/rest/v1/atbats_optimized?columns=%22game_pk%22%2C%22pitch_data%22%2C%22pitch_sequence%22%2C%22batter%22%2C%22inning%22%2C%22at_bat_number%22%2C%22game_date%22%2C%22pitcher%22 "HTTP/2 201 Created"
+2025-07-30 12:42:59,857 - INFO -     ✅ Batch 55: Inserted 50 at-bats
+2025-07-30 12:43:00,357 - INFO -     📦 Batch 56/601: Inserting 50 at-bats (attempt 1)
+2025-07-30 12:43:00,454 - INFO - HTTP Request: POST https://xjjwtmcoklsqosxkexqw.supabase.co/rest/v1/atbats_optimized?columns=%22game_pk%22%2C%22pitch_data%22%2C%22pitch_sequence%22%2C%22batter%22%2C%22inning%22%2C%22at_bat_number%22%2C%22game_date%22%2C%22pitcher%22 "HTTP/2 201 Created"
+2025-07-30 12:43:00,455 - INFO -     ✅ Batch 56: Inserted 50 at-bats
+2025-07-30 12:43:00,959 - INFO -     📦 Batch 57/601: Inserting 50 at-bats (attempt 1)
+2025-07-30 12:43:01,041 - INFO - HTTP Request: POST https://xjjwtmcoklsqosxkexqw.supabase.co/rest/v1/atbats_optimized?columns=%22game_pk%22%2C%22pitch_data%22%2C%22pitch_sequence%22%2C%22batter%22%2C%22inning%22%2C%22at_bat_number%22%2C%22game_date%22%2C%22pitcher%22 "HTTP/2 201 Created"
+2025-07-30 12:43:01,042 - INFO -     ✅ Batch 57: Inserted 50 at-bats
+2025-07-30 12:43:01,543 - INFO -     📦 Batch 58/601: Inserting 50 at-bats (attempt 1)
+2025-07-30 12:43:01,647 - INFO - HTTP Request: POST https://xjjwtmcoklsqosxkexqw.supabase.co/rest/v1/atbats_optimized?columns=%22game_pk%22%2C%22pitch_data%22%2C%22pitch_sequence%22%2C%22batter%22%2C%22inning%22%2C%22at_bat_number%22%2C%22game_date%22%2C%22pitcher%22 "HTTP/2 201 Created"
+2025-07-30 12:43:01,648 - INFO -     ✅ Batch 58: Inserted 50 at-bats
+2025-07-30 12:43:02,149 - INFO -     📦 Batch 59/601: Inserting 50 at-bats (attempt 1)
+2025-07-30 12:43:02,241 - INFO - HTTP Request: POST https://xjjwtmcoklsqosxkexqw.supabase.co/rest/v1/atbats_optimized?columns=%22game_pk%22%2C%22pitch_data%22%2C%22pitch_sequence%22%2C%22batter%22%2C%22inning%22%2C%22at_bat_number%22%2C%22game_date%22%2C%22pitcher%22 "HTTP/2 201 Created"
+2025-07-30 12:43:02,242 - INFO -     ✅ Batch 59: Inserted 50 at-bats
+2025-07-30 12:43:02,747 - INFO -     📦 Batch 60/601: Inserting 50 at-bats (attempt 1)
+2025-07-30 12:43:02,850 - INFO - HTTP Request: POST https://xjjwtmcoklsqosxkexqw.supabase.co/rest/v1/atbats_optimized?columns=%22game_pk%22%2C%22pitch_data%22%2C%22pitch_sequence%22%2C%22batter%22%2C%22inning%22%2C%22at_bat_number%22%2C%22game_date%22%2C%22pitcher%22 "HTTP/2 201 Created"
+2025-07-30 12:43:02,852 - INFO -     ✅ Batch 60: Inserted 50 at-bats
+2025-07-30 12:43:03,356 - INFO -     📦 Batch 61/601: Inserting 50 at-bats (attempt 1)
+2025-07-30 12:43:03,461 - INFO - HTTP Request: POST https://xjjwtmcoklsqosxkexqw.supabase.co/rest/v1/atbats_optimized?columns=%22game_pk%22%2C%22pitch_data%22%2C%22pitch_sequence%22%2C%22batter%22%2C%22inning%22%2C%22at_bat_number%22%2C%22game_date%22%2C%22pitcher%22 "HTTP/2 201 Created"
+2025-07-30 12:43:03,462 - INFO -     ✅ Batch 61: Inserted 50 at-bats
+2025-07-30 12:43:03,965 - INFO -     📦 Batch 62/601: Inserting 50 at-bats (attempt 1)
+2025-07-30 12:43:04,037 - INFO - HTTP Request: POST https://xjjwtmcoklsqosxkexqw.supabase.co/rest/v1/atbats_optimized?columns=%22game_pk%22%2C%22pitch_data%22%2C%22pitch_sequence%22%2C%22batter%22%2C%22inning%22%2C%22at_bat_number%22%2C%22game_date%22%2C%22pitcher%22 "HTTP/2 201 Created"
+2025-07-30 12:43:04,037 - INFO -     ✅ Batch 62: Inserted 50 at-bats
+2025-07-30 12:43:04,540 - INFO -     📦 Batch 63/601: Inserting 50 at-bats (attempt 1)
+2025-07-30 12:43:04,614 - INFO - HTTP Request: POST https://xjjwtmcoklsqosxkexqw.supabase.co/rest/v1/atbats_optimized?columns=%22game_pk%22%2C%22pitch_data%22%2C%22pitch_sequence%22%2C%22batter%22%2C%22inning%22%2C%22at_bat_number%22%2C%22game_date%22%2C%22pitcher%22 "HTTP/2 201 Created"
+2025-07-30 12:43:04,614 - INFO -     ✅ Batch 63: Inserted 50 at-bats
+2025-07-30 12:43:05,119 - INFO -     📦 Batch 64/601: Inserting 50 at-bats (attempt 1)
+2025-07-30 12:43:05,197 - INFO - HTTP Request: POST https://xjjwtmcoklsqosxkexqw.supabase.co/rest/v1/atbats_optimized?columns=%22game_pk%22%2C%22pitch_data%22%2C%22pitch_sequence%22%2C%22batter%22%2C%22inning%22%2C%22at_bat_number%22%2C%22game_date%22%2C%22pitcher%22 "HTTP/2 201 Created"
+2025-07-30 12:43:05,198 - INFO -     ✅ Batch 64: Inserted 50 at-bats
+2025-07-30 12:43:05,699 - INFO -     📦 Batch 65/601: Inserting 50 at-bats (attempt 1)
+2025-07-30 12:43:05,789 - INFO - HTTP Request: POST https://xjjwtmcoklsqosxkexqw.supabase.co/rest/v1/atbats_optimized?columns=%22game_pk%22%2C%22pitch_data%22%2C%22pitch_sequence%22%2C%22batter%22%2C%22inning%22%2C%22at_bat_number%22%2C%22game_date%22%2C%22pitcher%22 "HTTP/2 201 Created"
+2025-07-30 12:43:05,789 - INFO -     ✅ Batch 65: Inserted 50 at-bats
+2025-07-30 12:43:06,291 - INFO -     📦 Batch 66/601: Inserting 50 at-bats (attempt 1)
+2025-07-30 12:43:06,389 - INFO - HTTP Request: POST https://xjjwtmcoklsqosxkexqw.supabase.co/rest/v1/atbats_optimized?columns=%22game_pk%22%2C%22pitch_data%22%2C%22pitch_sequence%22%2C%22batter%22%2C%22inning%22%2C%22at_bat_number%22%2C%22game_date%22%2C%22pitcher%22 "HTTP/2 201 Created"
+2025-07-30 12:43:06,390 - INFO -     ✅ Batch 66: Inserted 50 at-bats
+2025-07-30 12:43:06,895 - INFO -     📦 Batch 67/601: Inserting 50 at-bats (attempt 1)
+2025-07-30 12:43:06,985 - INFO - HTTP Request: POST https://xjjwtmcoklsqosxkexqw.supabase.co/rest/v1/atbats_optimized?columns=%22game_pk%22%2C%22pitch_data%22%2C%22pitch_sequence%22%2C%22batter%22%2C%22inning%22%2C%22at_bat_number%22%2C%22game_date%22%2C%22pitcher%22 "HTTP/2 201 Created"
+2025-07-30 12:43:06,986 - INFO -     ✅ Batch 67: Inserted 50 at-bats
+2025-07-30 12:43:07,490 - INFO -     📦 Batch 68/601: Inserting 50 at-bats (attempt 1)
+2025-07-30 12:43:07,581 - INFO - HTTP Request: POST https://xjjwtmcoklsqosxkexqw.supabase.co/rest/v1/atbats_optimized?columns=%22game_pk%22%2C%22pitch_data%22%2C%22pitch_sequence%22%2C%22batter%22%2C%22inning%22%2C%22at_bat_number%22%2C%22game_date%22%2C%22pitcher%22 "HTTP/2 201 Created"
+2025-07-30 12:43:07,582 - INFO -     ✅ Batch 68: Inserted 50 at-bats
+2025-07-30 12:43:08,082 - INFO -     📦 Batch 69/601: Inserting 50 at-bats (attempt 1)
+2025-07-30 12:43:08,181 - INFO - HTTP Request: POST https://xjjwtmcoklsqosxkexqw.supabase.co/rest/v1/atbats_optimized?columns=%22game_pk%22%2C%22pitch_data%22%2C%22pitch_sequence%22%2C%22batter%22%2C%22inning%22%2C%22at_bat_number%22%2C%22game_date%22%2C%22pitcher%22 "HTTP/2 201 Created"
+2025-07-30 12:43:08,182 - INFO -     ✅ Batch 69: Inserted 50 at-bats
+2025-07-30 12:43:08,687 - INFO -     📦 Batch 70/601: Inserting 50 at-bats (attempt 1)
+2025-07-30 12:43:08,763 - INFO - HTTP Request: POST https://xjjwtmcoklsqosxkexqw.supabase.co/rest/v1/atbats_optimized?columns=%22game_pk%22%2C%22pitch_data%22%2C%22pitch_sequence%22%2C%22batter%22%2C%22inning%22%2C%22at_bat_number%22%2C%22game_date%22%2C%22pitcher%22 "HTTP/2 201 Created"
+2025-07-30 12:43:08,764 - INFO -     ✅ Batch 70: Inserted 50 at-bats
+2025-07-30 12:43:09,269 - INFO -     📦 Batch 71/601: Inserting 50 at-bats (attempt 1)
+2025-07-30 12:43:09,344 - INFO - HTTP Request: POST https://xjjwtmcoklsqosxkexqw.supabase.co/rest/v1/atbats_optimized?columns=%22game_pk%22%2C%22pitch_data%22%2C%22pitch_sequence%22%2C%22batter%22%2C%22inning%22%2C%22at_bat_number%22%2C%22game_date%22%2C%22pitcher%22 "HTTP/2 201 Created"
+2025-07-30 12:43:09,345 - INFO -     ✅ Batch 71: Inserted 50 at-bats
+2025-07-30 12:43:09,848 - INFO -     📦 Batch 72/601: Inserting 50 at-bats (attempt 1)
+2025-07-30 12:43:09,919 - INFO - HTTP Request: POST https://xjjwtmcoklsqosxkexqw.supabase.co/rest/v1/atbats_optimized?columns=%22game_pk%22%2C%22pitch_data%22%2C%22pitch_sequence%22%2C%22batter%22%2C%22inning%22%2C%22at_bat_number%22%2C%22game_date%22%2C%22pitcher%22 "HTTP/2 201 Created"
+2025-07-30 12:43:09,920 - INFO -     ✅ Batch 72: Inserted 50 at-bats
+2025-07-30 12:43:10,425 - INFO -     📦 Batch 73/601: Inserting 50 at-bats (attempt 1)
+2025-07-30 12:43:10,502 - INFO - HTTP Request: POST https://xjjwtmcoklsqosxkexqw.supabase.co/rest/v1/atbats_optimized?columns=%22game_pk%22%2C%22pitch_data%22%2C%22pitch_sequence%22%2C%22batter%22%2C%22inning%22%2C%22at_bat_number%22%2C%22game_date%22%2C%22pitcher%22 "HTTP/2 201 Created"
+2025-07-30 12:43:10,503 - INFO -     ✅ Batch 73: Inserted 50 at-bats
+2025-07-30 12:43:11,007 - INFO -     📦 Batch 74/601: Inserting 50 at-bats (attempt 1)
+2025-07-30 12:43:11,085 - INFO - HTTP Request: POST https://xjjwtmcoklsqosxkexqw.supabase.co/rest/v1/atbats_optimized?columns=%22game_pk%22%2C%22pitch_data%22%2C%22pitch_sequence%22%2C%22batter%22%2C%22inning%22%2C%22at_bat_number%22%2C%22game_date%22%2C%22pitcher%22 "HTTP/2 201 Created"
+2025-07-30 12:43:11,086 - INFO -     ✅ Batch 74: Inserted 50 at-bats
+2025-07-30 12:43:11,587 - INFO -     📦 Batch 75/601: Inserting 50 at-bats (attempt 1)
+2025-07-30 12:43:11,659 - INFO - HTTP Request: POST https://xjjwtmcoklsqosxkexqw.supabase.co/rest/v1/atbats_optimized?columns=%22game_pk%22%2C%22pitch_data%22%2C%22pitch_sequence%22%2C%22batter%22%2C%22inning%22%2C%22at_bat_number%22%2C%22game_date%22%2C%22pitcher%22 "HTTP/2 201 Created"
+2025-07-30 12:43:11,660 - INFO -     ✅ Batch 75: Inserted 50 at-bats
+2025-07-30 12:43:12,163 - INFO -     📦 Batch 76/601: Inserting 50 at-bats (attempt 1)
+2025-07-30 12:43:12,298 - INFO - HTTP Request: POST https://xjjwtmcoklsqosxkexqw.supabase.co/rest/v1/atbats_optimized?columns=%22game_pk%22%2C%22pitch_data%22%2C%22pitch_sequence%22%2C%22batter%22%2C%22inning%22%2C%22at_bat_number%22%2C%22game_date%22%2C%22pitcher%22 "HTTP/2 201 Created"
+2025-07-30 12:43:12,301 - INFO -     ✅ Batch 76: Inserted 50 at-bats
+2025-07-30 12:43:12,806 - INFO -     📦 Batch 77/601: Inserting 50 at-bats (attempt 1)
+2025-07-30 12:43:12,979 - INFO - HTTP Request: POST https://xjjwtmcoklsqosxkexqw.supabase.co/rest/v1/atbats_optimized?columns=%22game_pk%22%2C%22pitch_data%22%2C%22pitch_sequence%22%2C%22batter%22%2C%22inning%22%2C%22at_bat_number%22%2C%22game_date%22%2C%22pitcher%22 "HTTP/2 201 Created"
+2025-07-30 12:43:12,980 - INFO -     ✅ Batch 77: Inserted 50 at-bats
+2025-07-30 12:43:13,485 - INFO -     📦 Batch 78/601: Inserting 50 at-bats (attempt 1)
+2025-07-30 12:43:13,565 - INFO - HTTP Request: POST https://xjjwtmcoklsqosxkexqw.supabase.co/rest/v1/atbats_optimized?columns=%22game_pk%22%2C%22pitch_data%22%2C%22pitch_sequence%22%2C%22batter%22%2C%22inning%22%2C%22at_bat_number%22%2C%22game_date%22%2C%22pitcher%22 "HTTP/2 201 Created"
+2025-07-30 12:43:13,565 - INFO -     ✅ Batch 78: Inserted 50 at-bats
+2025-07-30 12:43:14,071 - INFO -     📦 Batch 79/601: Inserting 50 at-bats (attempt 1)
+2025-07-30 12:43:14,145 - INFO - HTTP Request: POST https://xjjwtmcoklsqosxkexqw.supabase.co/rest/v1/atbats_optimized?columns=%22game_pk%22%2C%22pitch_data%22%2C%22pitch_sequence%22%2C%22batter%22%2C%22inning%22%2C%22at_bat_number%22%2C%22game_date%22%2C%22pitcher%22 "HTTP/2 201 Created"
+2025-07-30 12:43:14,147 - INFO -     ✅ Batch 79: Inserted 50 at-bats
+2025-07-30 12:43:14,652 - INFO -     📦 Batch 80/601: Inserting 50 at-bats (attempt 1)
+2025-07-30 12:43:14,739 - INFO - HTTP Request: POST https://xjjwtmcoklsqosxkexqw.supabase.co/rest/v1/atbats_optimized?columns=%22game_pk%22%2C%22pitch_data%22%2C%22pitch_sequence%22%2C%22batter%22%2C%22inning%22%2C%22at_bat_number%22%2C%22game_date%22%2C%22pitcher%22 "HTTP/2 201 Created"
+2025-07-30 12:43:14,740 - INFO -     ✅ Batch 80: Inserted 50 at-bats
+2025-07-30 12:43:15,245 - INFO -     📦 Batch 81/601: Inserting 50 at-bats (attempt 1)
+2025-07-30 12:43:15,328 - INFO - HTTP Request: POST https://xjjwtmcoklsqosxkexqw.supabase.co/rest/v1/atbats_optimized?columns=%22game_pk%22%2C%22pitch_data%22%2C%22pitch_sequence%22%2C%22batter%22%2C%22inning%22%2C%22at_bat_number%22%2C%22game_date%22%2C%22pitcher%22 "HTTP/2 201 Created"
+2025-07-30 12:43:15,330 - INFO -     ✅ Batch 81: Inserted 50 at-bats
+2025-07-30 12:43:15,832 - INFO -     📦 Batch 82/601: Inserting 50 at-bats (attempt 1)
+2025-07-30 12:43:15,911 - INFO - HTTP Request: POST https://xjjwtmcoklsqosxkexqw.supabase.co/rest/v1/atbats_optimized?columns=%22game_pk%22%2C%22pitch_data%22%2C%22pitch_sequence%22%2C%22batter%22%2C%22inning%22%2C%22at_bat_number%22%2C%22game_date%22%2C%22pitcher%22 "HTTP/2 201 Created"
+2025-07-30 12:43:15,913 - INFO -     ✅ Batch 82: Inserted 50 at-bats
+2025-07-30 12:43:16,417 - INFO -     📦 Batch 83/601: Inserting 50 at-bats (attempt 1)
+2025-07-30 12:43:16,487 - INFO - HTTP Request: POST https://xjjwtmcoklsqosxkexqw.supabase.co/rest/v1/atbats_optimized?columns=%22game_pk%22%2C%22pitch_data%22%2C%22pitch_sequence%22%2C%22batter%22%2C%22inning%22%2C%22at_bat_number%22%2C%22game_date%22%2C%22pitcher%22 "HTTP/2 201 Created"
+2025-07-30 12:43:16,488 - INFO -     ✅ Batch 83: Inserted 50 at-bats
+2025-07-30 12:43:16,993 - INFO -     📦 Batch 84/601: Inserting 50 at-bats (attempt 1)
+2025-07-30 12:43:17,071 - INFO - HTTP Request: POST https://xjjwtmcoklsqosxkexqw.supabase.co/rest/v1/atbats_optimized?columns=%22game_pk%22%2C%22pitch_data%22%2C%22pitch_sequence%22%2C%22batter%22%2C%22inning%22%2C%22at_bat_number%22%2C%22game_date%22%2C%22pitcher%22 "HTTP/2 201 Created"
+2025-07-30 12:43:17,073 - INFO -     ✅ Batch 84: Inserted 50 at-bats
+2025-07-30 12:43:17,578 - INFO -     📦 Batch 85/601: Inserting 50 at-bats (attempt 1)
+2025-07-30 12:43:17,649 - INFO - HTTP Request: POST https://xjjwtmcoklsqosxkexqw.supabase.co/rest/v1/atbats_optimized?columns=%22game_pk%22%2C%22pitch_data%22%2C%22pitch_sequence%22%2C%22batter%22%2C%22inning%22%2C%22at_bat_number%22%2C%22game_date%22%2C%22pitcher%22 "HTTP/2 201 Created"
+2025-07-30 12:43:17,650 - INFO -     ✅ Batch 85: Inserted 50 at-bats
+2025-07-30 12:43:18,155 - INFO -     📦 Batch 86/601: Inserting 50 at-bats (attempt 1)
+2025-07-30 12:43:18,248 - INFO - HTTP Request: POST https://xjjwtmcoklsqosxkexqw.supabase.co/rest/v1/atbats_optimized?columns=%22game_pk%22%2C%22pitch_data%22%2C%22pitch_sequence%22%2C%22batter%22%2C%22inning%22%2C%22at_bat_number%22%2C%22game_date%22%2C%22pitcher%22 "HTTP/2 201 Created"
+2025-07-30 12:43:18,249 - INFO -     ✅ Batch 86: Inserted 50 at-bats
+2025-07-30 12:43:18,755 - INFO -     📦 Batch 87/601: Inserting 50 at-bats (attempt 1)
+2025-07-30 12:43:18,845 - INFO - HTTP Request: POST https://xjjwtmcoklsqosxkexqw.supabase.co/rest/v1/atbats_optimized?columns=%22game_pk%22%2C%22pitch_data%22%2C%22pitch_sequence%22%2C%22batter%22%2C%22inning%22%2C%22at_bat_number%22%2C%22game_date%22%2C%22pitcher%22 "HTTP/2 201 Created"
+2025-07-30 12:43:18,847 - INFO -     ✅ Batch 87: Inserted 50 at-bats
+2025-07-30 12:43:19,352 - INFO -     📦 Batch 88/601: Inserting 50 at-bats (attempt 1)
+2025-07-30 12:43:19,438 - INFO - HTTP Request: POST https://xjjwtmcoklsqosxkexqw.supabase.co/rest/v1/atbats_optimized?columns=%22game_pk%22%2C%22pitch_data%22%2C%22pitch_sequence%22%2C%22batter%22%2C%22inning%22%2C%22at_bat_number%22%2C%22game_date%22%2C%22pitcher%22 "HTTP/2 201 Created"
+2025-07-30 12:43:19,439 - INFO -     ✅ Batch 88: Inserted 50 at-bats
+2025-07-30 12:43:19,942 - INFO -     📦 Batch 89/601: Inserting 50 at-bats (attempt 1)
+2025-07-30 12:43:20,020 - INFO - HTTP Request: POST https://xjjwtmcoklsqosxkexqw.supabase.co/rest/v1/atbats_optimized?columns=%22game_pk%22%2C%22pitch_data%22%2C%22pitch_sequence%22%2C%22batter%22%2C%22inning%22%2C%22at_bat_number%22%2C%22game_date%22%2C%22pitcher%22 "HTTP/2 201 Created"
+2025-07-30 12:43:20,022 - INFO -     ✅ Batch 89: Inserted 50 at-bats
+2025-07-30 12:43:20,527 - INFO -     📦 Batch 90/601: Inserting 50 at-bats (attempt 1)
+2025-07-30 12:43:20,618 - INFO - HTTP Request: POST https://xjjwtmcoklsqosxkexqw.supabase.co/rest/v1/atbats_optimized?columns=%22game_pk%22%2C%22pitch_data%22%2C%22pitch_sequence%22%2C%22batter%22%2C%22inning%22%2C%22at_bat_number%22%2C%22game_date%22%2C%22pitcher%22 "HTTP/2 201 Created"
+2025-07-30 12:43:20,619 - INFO -     ✅ Batch 90: Inserted 50 at-bats
+2025-07-30 12:43:21,120 - INFO -     📦 Batch 91/601: Inserting 50 at-bats (attempt 1)
+2025-07-30 12:43:21,233 - INFO - HTTP Request: POST https://xjjwtmcoklsqosxkexqw.supabase.co/rest/v1/atbats_optimized?columns=%22game_pk%22%2C%22pitch_data%22%2C%22pitch_sequence%22%2C%22batter%22%2C%22inning%22%2C%22at_bat_number%22%2C%22game_date%22%2C%22pitcher%22 "HTTP/2 201 Created"
+2025-07-30 12:43:21,233 - INFO -     ✅ Batch 91: Inserted 50 at-bats
+2025-07-30 12:43:21,739 - INFO -     📦 Batch 92/601: Inserting 50 at-bats (attempt 1)
+2025-07-30 12:43:21,817 - INFO - HTTP Request: POST https://xjjwtmcoklsqosxkexqw.supabase.co/rest/v1/atbats_optimized?columns=%22game_pk%22%2C%22pitch_data%22%2C%22pitch_sequence%22%2C%22batter%22%2C%22inning%22%2C%22at_bat_number%22%2C%22game_date%22%2C%22pitcher%22 "HTTP/2 201 Created"
+2025-07-30 12:43:21,818 - INFO -     ✅ Batch 92: Inserted 50 at-bats
+2025-07-30 12:43:22,323 - INFO -     📦 Batch 93/601: Inserting 50 at-bats (attempt 1)
+2025-07-30 12:43:22,428 - INFO - HTTP Request: POST https://xjjwtmcoklsqosxkexqw.supabase.co/rest/v1/atbats_optimized?columns=%22game_pk%22%2C%22pitch_data%22%2C%22pitch_sequence%22%2C%22batter%22%2C%22inning%22%2C%22at_bat_number%22%2C%22game_date%22%2C%22pitcher%22 "HTTP/2 201 Created"
+2025-07-30 12:43:22,430 - INFO -     ✅ Batch 93: Inserted 50 at-bats
+2025-07-30 12:43:22,933 - INFO -     📦 Batch 94/601: Inserting 50 at-bats (attempt 1)
+2025-07-30 12:43:23,131 - INFO - HTTP Request: POST https://xjjwtmcoklsqosxkexqw.supabase.co/rest/v1/atbats_optimized?columns=%22game_pk%22%2C%22pitch_data%22%2C%22pitch_sequence%22%2C%22batter%22%2C%22inning%22%2C%22at_bat_number%22%2C%22game_date%22%2C%22pitcher%22 "HTTP/2 201 Created"
+2025-07-30 12:43:23,135 - INFO -     ✅ Batch 94: Inserted 50 at-bats
+2025-07-30 12:43:23,635 - INFO -     📦 Batch 95/601: Inserting 50 at-bats (attempt 1)
+2025-07-30 12:43:23,713 - INFO - HTTP Request: POST https://xjjwtmcoklsqosxkexqw.supabase.co/rest/v1/atbats_optimized?columns=%22game_pk%22%2C%22pitch_data%22%2C%22pitch_sequence%22%2C%22batter%22%2C%22inning%22%2C%22at_bat_number%22%2C%22game_date%22%2C%22pitcher%22 "HTTP/2 201 Created"
+2025-07-30 12:43:23,714 - INFO -     ✅ Batch 95: Inserted 50 at-bats
+2025-07-30 12:43:24,219 - INFO -     📦 Batch 96/601: Inserting 50 at-bats (attempt 1)
+2025-07-30 12:43:24,286 - INFO - HTTP Request: POST https://xjjwtmcoklsqosxkexqw.supabase.co/rest/v1/atbats_optimized?columns=%22game_pk%22%2C%22pitch_data%22%2C%22pitch_sequence%22%2C%22batter%22%2C%22inning%22%2C%22at_bat_number%22%2C%22game_date%22%2C%22pitcher%22 "HTTP/2 201 Created"
+2025-07-30 12:43:24,287 - INFO -     ✅ Batch 96: Inserted 50 at-bats
+2025-07-30 12:43:24,792 - INFO -     📦 Batch 97/601: Inserting 50 at-bats (attempt 1)
+2025-07-30 12:43:24,882 - INFO - HTTP Request: POST https://xjjwtmcoklsqosxkexqw.supabase.co/rest/v1/atbats_optimized?columns=%22game_pk%22%2C%22pitch_data%22%2C%22pitch_sequence%22%2C%22batter%22%2C%22inning%22%2C%22at_bat_number%22%2C%22game_date%22%2C%22pitcher%22 "HTTP/2 201 Created"
+2025-07-30 12:43:24,886 - INFO -     ✅ Batch 97: Inserted 50 at-bats
+2025-07-30 12:43:25,390 - INFO -     📦 Batch 98/601: Inserting 50 at-bats (attempt 1)
+2025-07-30 12:43:25,469 - INFO - HTTP Request: POST https://xjjwtmcoklsqosxkexqw.supabase.co/rest/v1/atbats_optimized?columns=%22game_pk%22%2C%22pitch_data%22%2C%22pitch_sequence%22%2C%22batter%22%2C%22inning%22%2C%22at_bat_number%22%2C%22game_date%22%2C%22pitcher%22 "HTTP/2 201 Created"
+2025-07-30 12:43:25,471 - INFO -     ✅ Batch 98: Inserted 50 at-bats
+2025-07-30 12:43:25,974 - INFO -     📦 Batch 99/601: Inserting 50 at-bats (attempt 1)
+2025-07-30 12:43:26,063 - INFO - HTTP Request: POST https://xjjwtmcoklsqosxkexqw.supabase.co/rest/v1/atbats_optimized?columns=%22game_pk%22%2C%22pitch_data%22%2C%22pitch_sequence%22%2C%22batter%22%2C%22inning%22%2C%22at_bat_number%22%2C%22game_date%22%2C%22pitcher%22 "HTTP/2 201 Created"
+2025-07-30 12:43:26,064 - INFO -     ✅ Batch 99: Inserted 50 at-bats
+2025-07-30 12:43:26,570 - INFO -     📦 Batch 100/601: Inserting 50 at-bats (attempt 1)
+2025-07-30 12:43:26,644 - INFO - HTTP Request: POST https://xjjwtmcoklsqosxkexqw.supabase.co/rest/v1/atbats_optimized?columns=%22game_pk%22%2C%22pitch_data%22%2C%22pitch_sequence%22%2C%22batter%22%2C%22inning%22%2C%22at_bat_number%22%2C%22game_date%22%2C%22pitcher%22 "HTTP/2 201 Created"
+2025-07-30 12:43:26,646 - INFO -     ✅ Batch 100: Inserted 50 at-bats
+2025-07-30 12:43:27,151 - INFO -     📦 Batch 101/601: Inserting 50 at-bats (attempt 1)
+2025-07-30 12:43:27,229 - INFO - HTTP Request: POST https://xjjwtmcoklsqosxkexqw.supabase.co/rest/v1/atbats_optimized?columns=%22game_pk%22%2C%22pitch_data%22%2C%22pitch_sequence%22%2C%22batter%22%2C%22inning%22%2C%22at_bat_number%22%2C%22game_date%22%2C%22pitcher%22 "HTTP/2 201 Created"
+2025-07-30 12:43:27,229 - INFO -     ✅ Batch 101: Inserted 50 at-bats
+2025-07-30 12:43:27,735 - INFO -     📦 Batch 102/601: Inserting 50 at-bats (attempt 1)
+2025-07-30 12:43:27,823 - INFO - HTTP Request: POST https://xjjwtmcoklsqosxkexqw.supabase.co/rest/v1/atbats_optimized?columns=%22game_pk%22%2C%22pitch_data%22%2C%22pitch_sequence%22%2C%22batter%22%2C%22inning%22%2C%22at_bat_number%22%2C%22game_date%22%2C%22pitcher%22 "HTTP/2 201 Created"
+2025-07-30 12:43:27,825 - INFO -     ✅ Batch 102: Inserted 50 at-bats
+2025-07-30 12:43:28,330 - INFO -     📦 Batch 103/601: Inserting 50 at-bats (attempt 1)
+2025-07-30 12:43:28,401 - INFO - HTTP Request: POST https://xjjwtmcoklsqosxkexqw.supabase.co/rest/v1/atbats_optimized?columns=%22game_pk%22%2C%22pitch_data%22%2C%22pitch_sequence%22%2C%22batter%22%2C%22inning%22%2C%22at_bat_number%22%2C%22game_date%22%2C%22pitcher%22 "HTTP/2 201 Created"
+2025-07-30 12:43:28,403 - INFO -     ✅ Batch 103: Inserted 50 at-bats
+2025-07-30 12:43:28,905 - INFO -     📦 Batch 104/601: Inserting 50 at-bats (attempt 1)
+2025-07-30 12:43:28,985 - INFO - HTTP Request: POST https://xjjwtmcoklsqosxkexqw.supabase.co/rest/v1/atbats_optimized?columns=%22game_pk%22%2C%22pitch_data%22%2C%22pitch_sequence%22%2C%22batter%22%2C%22inning%22%2C%22at_bat_number%22%2C%22game_date%22%2C%22pitcher%22 "HTTP/2 201 Created"
+2025-07-30 12:43:28,987 - INFO -     ✅ Batch 104: Inserted 50 at-bats
+2025-07-30 12:43:29,490 - INFO -     📦 Batch 105/601: Inserting 50 at-bats (attempt 1)
+2025-07-30 12:43:29,590 - INFO - HTTP Request: POST https://xjjwtmcoklsqosxkexqw.supabase.co/rest/v1/atbats_optimized?columns=%22game_pk%22%2C%22pitch_data%22%2C%22pitch_sequence%22%2C%22batter%22%2C%22inning%22%2C%22at_bat_number%22%2C%22game_date%22%2C%22pitcher%22 "HTTP/2 201 Created"
+2025-07-30 12:43:29,591 - INFO -     ✅ Batch 105: Inserted 50 at-bats
+2025-07-30 12:43:30,096 - INFO -     📦 Batch 106/601: Inserting 50 at-bats (attempt 1)
+2025-07-30 12:43:30,177 - INFO - HTTP Request: POST https://xjjwtmcoklsqosxkexqw.supabase.co/rest/v1/atbats_optimized?columns=%22game_pk%22%2C%22pitch_data%22%2C%22pitch_sequence%22%2C%22batter%22%2C%22inning%22%2C%22at_bat_number%22%2C%22game_date%22%2C%22pitcher%22 "HTTP/2 201 Created"
+2025-07-30 12:43:30,178 - INFO -     ✅ Batch 106: Inserted 50 at-bats
+2025-07-30 12:43:30,684 - INFO -     📦 Batch 107/601: Inserting 50 at-bats (attempt 1)
+2025-07-30 12:43:30,753 - INFO - HTTP Request: POST https://xjjwtmcoklsqosxkexqw.supabase.co/rest/v1/atbats_optimized?columns=%22game_pk%22%2C%22pitch_data%22%2C%22pitch_sequence%22%2C%22batter%22%2C%22inning%22%2C%22at_bat_number%22%2C%22game_date%22%2C%22pitcher%22 "HTTP/2 201 Created"
+2025-07-30 12:43:30,753 - INFO -     ✅ Batch 107: Inserted 50 at-bats
+2025-07-30 12:43:31,259 - INFO -     📦 Batch 108/601: Inserting 50 at-bats (attempt 1)
+2025-07-30 12:43:31,329 - INFO - HTTP Request: POST https://xjjwtmcoklsqosxkexqw.supabase.co/rest/v1/atbats_optimized?columns=%22game_pk%22%2C%22pitch_data%22%2C%22pitch_sequence%22%2C%22batter%22%2C%22inning%22%2C%22at_bat_number%22%2C%22game_date%22%2C%22pitcher%22 "HTTP/2 201 Created"
+2025-07-30 12:43:31,329 - INFO -     ✅ Batch 108: Inserted 50 at-bats
+2025-07-30 12:43:31,833 - INFO -     📦 Batch 109/601: Inserting 50 at-bats (attempt 1)
+2025-07-30 12:43:31,903 - INFO - HTTP Request: POST https://xjjwtmcoklsqosxkexqw.supabase.co/rest/v1/atbats_optimized?columns=%22game_pk%22%2C%22pitch_data%22%2C%22pitch_sequence%22%2C%22batter%22%2C%22inning%22%2C%22at_bat_number%22%2C%22game_date%22%2C%22pitcher%22 "HTTP/2 201 Created"
+2025-07-30 12:43:31,903 - INFO -     ✅ Batch 109: Inserted 50 at-bats
+2025-07-30 12:43:32,408 - INFO -     📦 Batch 110/601: Inserting 50 at-bats (attempt 1)
+2025-07-30 12:43:32,490 - INFO - HTTP Request: POST https://xjjwtmcoklsqosxkexqw.supabase.co/rest/v1/atbats_optimized?columns=%22game_pk%22%2C%22pitch_data%22%2C%22pitch_sequence%22%2C%22batter%22%2C%22inning%22%2C%22at_bat_number%22%2C%22game_date%22%2C%22pitcher%22 "HTTP/2 201 Created"
+2025-07-30 12:43:32,490 - INFO -     ✅ Batch 110: Inserted 50 at-bats
+2025-07-30 12:43:32,991 - INFO -     📦 Batch 111/601: Inserting 50 at-bats (attempt 1)
+2025-07-30 12:43:33,061 - INFO - HTTP Request: POST https://xjjwtmcoklsqosxkexqw.supabase.co/rest/v1/atbats_optimized?columns=%22game_pk%22%2C%22pitch_data%22%2C%22pitch_sequence%22%2C%22batter%22%2C%22inning%22%2C%22at_bat_number%22%2C%22game_date%22%2C%22pitcher%22 "HTTP/2 201 Created"
+2025-07-30 12:43:33,061 - INFO -     ✅ Batch 111: Inserted 50 at-bats
+2025-07-30 12:43:33,565 - INFO -     📦 Batch 112/601: Inserting 50 at-bats (attempt 1)
+2025-07-30 12:43:33,650 - INFO - HTTP Request: POST https://xjjwtmcoklsqosxkexqw.supabase.co/rest/v1/atbats_optimized?columns=%22game_pk%22%2C%22pitch_data%22%2C%22pitch_sequence%22%2C%22batter%22%2C%22inning%22%2C%22at_bat_number%22%2C%22game_date%22%2C%22pitcher%22 "HTTP/2 201 Created"
+2025-07-30 12:43:33,651 - INFO -     ✅ Batch 112: Inserted 50 at-bats
+2025-07-30 12:43:34,156 - INFO -     📦 Batch 113/601: Inserting 50 at-bats (attempt 1)
+2025-07-30 12:43:34,228 - INFO - HTTP Request: POST https://xjjwtmcoklsqosxkexqw.supabase.co/rest/v1/atbats_optimized?columns=%22game_pk%22%2C%22pitch_data%22%2C%22pitch_sequence%22%2C%22batter%22%2C%22inning%22%2C%22at_bat_number%22%2C%22game_date%22%2C%22pitcher%22 "HTTP/2 201 Created"
+2025-07-30 12:43:34,230 - INFO -     ✅ Batch 113: Inserted 50 at-bats
+2025-07-30 12:43:34,731 - INFO -     📦 Batch 114/601: Inserting 50 at-bats (attempt 1)
+2025-07-30 12:43:34,807 - INFO - HTTP Request: POST https://xjjwtmcoklsqosxkexqw.supabase.co/rest/v1/atbats_optimized?columns=%22game_pk%22%2C%22pitch_data%22%2C%22pitch_sequence%22%2C%22batter%22%2C%22inning%22%2C%22at_bat_number%22%2C%22game_date%22%2C%22pitcher%22 "HTTP/2 201 Created"
+2025-07-30 12:43:34,809 - INFO -     ✅ Batch 114: Inserted 50 at-bats
+2025-07-30 12:43:35,310 - INFO -     📦 Batch 115/601: Inserting 50 at-bats (attempt 1)
+2025-07-30 12:43:35,385 - INFO - HTTP Request: POST https://xjjwtmcoklsqosxkexqw.supabase.co/rest/v1/atbats_optimized?columns=%22game_pk%22%2C%22pitch_data%22%2C%22pitch_sequence%22%2C%22batter%22%2C%22inning%22%2C%22at_bat_number%22%2C%22game_date%22%2C%22pitcher%22 "HTTP/2 201 Created"
+2025-07-30 12:43:35,386 - INFO -     ✅ Batch 115: Inserted 50 at-bats
+2025-07-30 12:43:35,891 - INFO -     📦 Batch 116/601: Inserting 50 at-bats (attempt 1)
+2025-07-30 12:43:35,963 - INFO - HTTP Request: POST https://xjjwtmcoklsqosxkexqw.supabase.co/rest/v1/atbats_optimized?columns=%22game_pk%22%2C%22pitch_data%22%2C%22pitch_sequence%22%2C%22batter%22%2C%22inning%22%2C%22at_bat_number%22%2C%22game_date%22%2C%22pitcher%22 "HTTP/2 201 Created"
+2025-07-30 12:43:35,964 - INFO -     ✅ Batch 116: Inserted 50 at-bats
+2025-07-30 12:43:36,470 - INFO -     📦 Batch 117/601: Inserting 50 at-bats (attempt 1)
+2025-07-30 12:43:36,542 - INFO - HTTP Request: POST https://xjjwtmcoklsqosxkexqw.supabase.co/rest/v1/atbats_optimized?columns=%22game_pk%22%2C%22pitch_data%22%2C%22pitch_sequence%22%2C%22batter%22%2C%22inning%22%2C%22at_bat_number%22%2C%22game_date%22%2C%22pitcher%22 "HTTP/2 201 Created"
+2025-07-30 12:43:36,542 - INFO -     ✅ Batch 117: Inserted 50 at-bats
+2025-07-30 12:43:37,047 - INFO -     📦 Batch 118/601: Inserting 50 at-bats (attempt 1)
+2025-07-30 12:43:37,140 - INFO - HTTP Request: POST https://xjjwtmcoklsqosxkexqw.supabase.co/rest/v1/atbats_optimized?columns=%22game_pk%22%2C%22pitch_data%22%2C%22pitch_sequence%22%2C%22batter%22%2C%22inning%22%2C%22at_bat_number%22%2C%22game_date%22%2C%22pitcher%22 "HTTP/2 201 Created"
+2025-07-30 12:43:37,141 - INFO -     ✅ Batch 118: Inserted 50 at-bats
