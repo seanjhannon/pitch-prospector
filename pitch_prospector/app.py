@@ -290,7 +290,6 @@ if submitted:
                     all_ids.add(batter_id)
                 
                 # Debug: see what IDs we're working with
-                st.write("Debug - Player IDs:", list(all_ids)[:5])  # Show first 5 IDs
                 
                 # Simplified player lookup without decorator
                 name_lookup = {}
@@ -300,7 +299,6 @@ if submitted:
                         lookup_df["full_name"] = lookup_df["name_first"] + " " + lookup_df["name_last"]
                         lookup_df["key_mlbam"] = lookup_df["key_mlbam"].astype(str)
                         name_lookup = lookup_df.set_index("key_mlbam")["full_name"].to_dict()
-                        st.write("Debug - Lookup successful, found names for:", len(name_lookup), "players")
                     else:
                         st.warning("No player names found, using player IDs instead")
                 except Exception as e:
