@@ -1,7 +1,7 @@
 import streamlit as st
 from datetime import datetime, timedelta
 import pandas as pd
-from pybaseball import playerid_reverse_lookup
+from pybaseball import playerid_reverse_lookup, statcast
 import warnings
 from dotenv import load_dotenv
 import os
@@ -123,6 +123,148 @@ def get_pitch_sequences_for_atbat_official(atbat_id):
         print(f"❌ Error querying pitch sequences: {e}")
         return []
 
+def get_most_recent_date():
+    """Get the most recent date in the database."""
+    try:
+        result = conn.table("atbats_optimized").select("game_date").order("game_date", desc=True).limit(1).execute()
+        if result.data:
+            most_recent_date = pd.to_datetime(result.data[0]['game_date'])
+            return most_recent_date
+        return None
+    except Exception as e:
+        print(f"❌ Error getting most recent date: {e}")
+        return None
+
+def process_statcast_data_for_refresh(df):
+    """Process Statcast data into optimized format for refresh."""
+    if df.empty:
+        return []
+    
+    atbats = []
+    
+    # Group by at-bat
+    for (game_pk, at_bat_number), atbat_group in df.groupby(['game_pk', 'at_bat_number']):
+        if atbat_group.empty:
+            continue
+            
+        # Sort by pitch number to maintain sequence
+        atbat_group = atbat_group.sort_values('pitch_number')
+        
+        # Extract pitch sequence and data
+        pitch_sequence = []
+        pitch_data = []
+        
+        for _, pitch in atbat_group.iterrows():
+            pitch_type = str(pitch.get('pitch_type', 'UN'))
+            description = str(pitch.get('description', 'unknown'))
+            
+            # Fill missing descriptions with reasonable defaults
+            if description == 'nan' or description == 'unknown':
+                if 'strike' in pitch_type.lower():
+                    description = 'called_strike'
+                elif 'ball' in pitch_type.lower():
+                    description = 'ball'
+                else:
+                    description = 'hit_into_play'
+            
+            pitch_sequence.append([pitch_type, description])
+            
+            # Extract speed and zone
+            speed = float(pitch.get('release_speed', 0)) if pd.notna(pitch.get('release_speed')) else 0
+            zone = int(pitch.get('zone', 0)) if pd.notna(pitch.get('zone')) else 0
+            pitch_data.append([speed, zone])
+        
+        # Create at-bat record
+        first_pitch = atbat_group.iloc[0]
+        atbat_record = {
+            'game_pk': int(first_pitch['game_pk']),
+            'at_bat_number': int(first_pitch['at_bat_number']),
+            'game_date': str(first_pitch['game_date'].date()),
+            'batter': int(first_pitch['batter']),
+            'pitcher': int(first_pitch['pitcher']),
+            'inning': int(first_pitch['inning']),
+            'pitch_sequence': pitch_sequence,
+            'pitch_data': pitch_data
+        }
+        
+        atbats.append(atbat_record)
+    
+    return atbats
+
+def insert_atbats_with_duplicate_prevention(atbats, batch_size=50):
+    """Insert at-bats with duplicate prevention using upsert."""
+    if not atbats:
+        return 0
+    
+    total_inserted = 0
+    
+    # Process in batches to avoid timeouts
+    for i in range(0, len(atbats), batch_size):
+        batch = atbats[i:i + batch_size]
+        
+        try:
+            # Use upsert to handle duplicates automatically
+            result = conn.table("atbats_optimized").upsert(batch, count="exact").execute()
+            inserted_count = result.count if result.count is not None else len(batch)
+            total_inserted += inserted_count
+            print(f"  ✅ Batch {i//batch_size + 1}: Inserted {inserted_count} at-bats")
+            
+            # Small delay to avoid overwhelming the connection
+            time.sleep(0.1)
+            
+        except Exception as e:
+            print(f"  ❌ Error inserting batch {i//batch_size + 1}: {e}")
+            continue
+    
+    return total_inserted
+
+def refresh_recent_data():
+    """Refresh data from most recent date to today."""
+    try:
+        # Get the most recent date in the database
+        most_recent_date = get_most_recent_date()
+        if not most_recent_date:
+            return False, "Could not determine most recent date in database"
+        
+        today = datetime.today().date()
+        
+        # If we already have today's data, no need to refresh
+        if most_recent_date.date() >= today:
+            return True, f"Database is already up to date (most recent: {most_recent_date.date()})"
+        
+        # Calculate the date range to fetch
+        start_date = most_recent_date + timedelta(days=1)  # Start from day after most recent
+        end_date = today
+        
+        print(f"🔄 Refreshing data from {start_date.date()} to {end_date}")
+        
+        # Fetch Statcast data
+        df = statcast(start_dt=str(start_date.date()), end_dt=str(end_date))
+        
+        if df.empty:
+            return True, f"No new data available for {start_date.date()} to {end_date}"
+        
+        print(f"📊 Retrieved {len(df):,} pitches")
+        
+        # Process data
+        atbats = process_statcast_data_for_refresh(df)
+        
+        if not atbats:
+            return True, "No valid at-bats found in new data"
+        
+        print(f"🔄 Processing {len(atbats):,} at-bats")
+        
+        # Insert data with duplicate prevention
+        inserted_count = insert_atbats_with_duplicate_prevention(atbats)
+        
+        if inserted_count > 0:
+            return True, f"Successfully refreshed data: {inserted_count} new at-bats added"
+        else:
+            return True, "No new at-bats were added (all were duplicates)"
+            
+    except Exception as e:
+        return False, f"Error refreshing data: {str(e)}"
+
 # --- Helper: Check if DB is reachable and has data ---
 @handle_database_errors
 def db_is_available():
@@ -170,7 +312,8 @@ print(f"🎉 App initialization completed in {time.time() - app_start_time:.2f}s
 st.title("At-Bat Sequence Finder")
 st.markdown(f"Pick a date range to search from {atbat_count:,} historical at-bats.")
 
-col1, col2 = st.columns(2)
+# Date range and refresh controls in one row
+col1, col2, col3 = st.columns(3)
 with col1:
     start_date = st.date_input(
         "Start date",
@@ -185,6 +328,22 @@ with col2:
         min_value=start_date,
         max_value=datetime.today()
     )
+with col3:
+    # Show most recent date
+    most_recent = get_most_recent_date()
+    if most_recent:
+        st.caption(f"Latest: {most_recent.date()}")
+
+    if st.button("🔄 Refresh Recent Data", type="secondary", key="refresh_button"):
+        with st.spinner("Refreshing recent data..."):
+            success, message = refresh_recent_data()
+            if success:
+                st.success(message)
+                # Refresh the page to show updated count
+                st.rerun()
+            else:
+                st.error(message)
+
 
 # Validate date range
 if not validate_date_range(start_date, end_date):
