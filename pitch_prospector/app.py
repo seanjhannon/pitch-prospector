@@ -168,11 +168,7 @@ print(f"🎉 App initialization completed in {time.time() - app_start_time:.2f}s
 
 # --- UI ---
 st.title("At-Bat Sequence Finder")
-st.markdown("Pick a date range to filter historical at-bats.")
-
-# Display fun factoid about database size
-if atbat_count > 0:
-    st.info(f"📊 **Fun fact:** This database contains {atbat_count:,} at-bats from 2015 to today!")
+st.markdown(f"Pick a date range to search from {atbat_count:,} historical at-bats.")
 
 col1, col2 = st.columns(2)
 with col1:
