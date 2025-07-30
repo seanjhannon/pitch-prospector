@@ -6,7 +6,6 @@ import warnings
 from dotenv import load_dotenv
 import os
 import time
-import psycopg2
 from pitch_prospector.error_handling import (
     handle_database_errors, handle_player_lookup_errors, 
     validate_date_range, validate_pitch_sequence,
