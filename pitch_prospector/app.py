@@ -310,7 +310,7 @@ print(f"🎉 App initialization completed in {time.time() - app_start_time:.2f}s
 
 # --- UI ---
 st.title("At-Bat Sequence Finder")
-st.subheader("It's like Shazam for baseball!⚾️")
+st.markdown("It's like Shazam for baseball! ⚾️")
 st.markdown("**How to use:** Pick a date range, then build a pitch sequence by selecting pitch types and outcomes. Find real at-bats that match your sequence!")
 
 # st.markdown(f"Pick a date range to search from {atbat_count:,} historical at-bats.")
@@ -352,7 +352,6 @@ with col3:
 if not validate_date_range(start_date, end_date):
     st.stop()
 
-st.markdown("Pick a pitch sequence to find matching historical at-bats.")
 
 PITCH_TYPE_MAP = {
     "AB": "Automatic Ball",
@@ -511,28 +510,82 @@ if submitted:
 
                     pitch_level_data = get_pitch_sequences_for_atbat_official(row["id"])
 
+                    # Mobile-responsive card layout
                     st.markdown(
-                        f"<div style='text-align: center;'>"
-                        f"<h3>{row['pitcher_name'].title()} vs {row['batter_name'].title()} — {pd.to_datetime(row['game_date']):%B %d, %Y}</h3>"
-                        f"</div>",
+                        f"""
+                        <div style="
+                            border: 1px solid #ddd; 
+                            border-radius: 10px; 
+                            padding: 20px; 
+                            margin: 10px 0; 
+                            background: white;
+                            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+                        ">
+                            <div style="text-align: center; margin-bottom: 15px;">
+                                <h3 style="margin: 0; color: #333;">{row['pitcher_name'].title()} vs {row['batter_name'].title()}</h3>
+                                <p style="margin: 5px 0; color: #666; font-size: 14px;">{pd.to_datetime(row['game_date']):%B %d, %Y}</p>
+                            </div>
+                            
+                            <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px;">
+                                <!-- Pitcher -->
+                                <div style="text-align: center; min-width: 60px;">
+                                    <img src="{row['pitcher_img']}" style="width: 50px; height: 50px; border-radius: 50%; object-fit: cover;" onerror="this.style.display='none'">
+                                    <p style="margin: 5px 0; font-size: 12px; color: #666;">Pitcher</p>
+                                </div>
+                                
+                                <!-- Pitch Sequence -->
+                                <div style="flex: 1; display: flex; justify-content: center; gap: 8px; flex-wrap: wrap;">
+                        """,
                         unsafe_allow_html=True
                     )
-                    cols = st.columns([1, 6, 1])
-                    with cols[0]:
-                        st.image(row["pitcher_img"], width=75)
-                    with cols[1]:
-                        pitch_cols = st.columns(len(pitch_level_data))
-                        for i, pitch in enumerate(pitch_level_data):
-                            with pitch_cols[i]:
-                                st.markdown(f"<div style='text-align:center;'>"
-                                            f"<strong>{pitch['pitch_type']}</strong><br>"
-                                            f"{pitch['release_speed']} mph<br>"
-                                            f"Zone {int(pitch.get('zone', '–'))}"
-                                            f"</div>", unsafe_allow_html=True)
-                    with cols[2]:
-                        st.image(row["batter_img"], width=75)
-
-                    st.markdown(f"<div style='text-align: center;'><a href='{row['statcast_url']}' target='_blank'>🔗 Watch on Statcast</a></div>", unsafe_allow_html=True)
+                    
+                    # Display pitch sequence
+                    for i, pitch in enumerate(pitch_level_data):
+                        st.markdown(
+                            f"""
+                            <div style="
+                                background: #f8f9fa; 
+                                border: 1px solid #dee2e6; 
+                                border-radius: 6px; 
+                                padding: 8px; 
+                                text-align: center; 
+                                min-width: 60px;
+                                font-size: 12px;
+                            ">
+                                <div style="font-weight: bold; color: #495057;">{pitch['pitch_type']}</div>
+                                <div style="color: #6c757d;">{pitch['release_speed']} mph</div>
+                                <div style="color: #6c757d;">Zone {int(pitch.get('zone', '–'))}</div>
+                            </div>
+                            """,
+                            unsafe_allow_html=True
+                        )
+                    
+                    st.markdown(
+                        f"""
+                                </div>
+                                
+                                <!-- Batter -->
+                                <div style="text-align: center; min-width: 60px;">
+                                    <img src="{row['batter_img']}" style="width: 50px; height: 50px; border-radius: 50%; object-fit: cover;" onerror="this.style.display='none'">
+                                    <p style="margin: 5px 0; font-size: 12px; color: #666;">Batter</p>
+                                </div>
+                            </div>
+                            
+                            <div style="text-align: center; margin-top: 15px;">
+                                <a href="{row['statcast_url']}" target="_blank" style="
+                                    background: #007bff; 
+                                    color: white; 
+                                    padding: 8px 16px; 
+                                    text-decoration: none; 
+                                    border-radius: 5px; 
+                                    font-size: 14px;
+                                    display: inline-block;
+                                ">🔗 Watch on Statcast</a>
+                            </div>
+                        </div>
+                        """,
+                        unsafe_allow_html=True
+                    )
                     st.markdown("---")
             else:
                 st.subheader("No matching at-bats found.")
