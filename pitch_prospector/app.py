@@ -461,6 +461,9 @@ if submitted:
             print(f"✅ Query completed in {time.time() - query_start_time:.2f}s, found {len(matches)} at-bats")
 
             if matches:
+                # Display count of matches found
+                st.success(f"🎯 Found {len(matches):,} matching at-bat{'s' if len(matches) != 1 else ''}!")
+                
                 all_ids = set()
                 for row in matches:
                     # Player IDs are now integers in Supabase
