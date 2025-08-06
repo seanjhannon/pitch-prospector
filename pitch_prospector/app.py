@@ -310,7 +310,10 @@ print(f"🎉 App initialization completed in {time.time() - app_start_time:.2f}s
 
 # --- UI ---
 st.title("At-Bat Sequence Finder")
-st.markdown(f"Pick a date range to search from {atbat_count:,} historical at-bats.")
+st.subheader("It's like Shazam for baseball!⚾️")
+st.markdown("**How to use:** Pick a date range, then build a pitch sequence by selecting pitch types and outcomes. Find real at-bats that match your sequence!")
+
+# st.markdown(f"Pick a date range to search from {atbat_count:,} historical at-bats.")
 
 # Date range and refresh controls in one row
 col1, col2, col3 = st.columns(3)
