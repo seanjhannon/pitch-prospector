@@ -309,8 +309,8 @@ else:
 print(f"🎉 App initialization completed in {time.time() - app_start_time:.2f}s")
 
 # --- UI ---
-st.title("At-Bat Sequence Finder")
-st.markdown("*It's like Shazam for baseball!* ⚾️")
+st.title("Pitch Prospector ⚾️⛏️")
+st.markdown("*It's like Shazam for baseball!* ")
 st.markdown(f"**How to use:** Pick a date range, then build a pitch sequence by selecting pitch types and outcomes. Find real at-bats that match your sequence from {atbat_count:,} historical at-bats, and watch them on Savant!")
 
 
