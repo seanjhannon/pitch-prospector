@@ -310,10 +310,9 @@ print(f"🎉 App initialization completed in {time.time() - app_start_time:.2f}s
 
 # --- UI ---
 st.title("At-Bat Sequence Finder")
-st.markdown("It's like Shazam for baseball! ⚾️")
-st.markdown("**How to use:** Pick a date range, then build a pitch sequence by selecting pitch types and outcomes. Find real at-bats that match your sequence!")
+st.markdown("*It's like Shazam for baseball!* ⚾️")
+st.markdown(f"**How to use:** Pick a date range, then build a pitch sequence by selecting pitch types and outcomes. Find real at-bats that match your sequence from {atbat_count:,} historical at-bats, and watch them on Savant!")
 
-# st.markdown(f"Pick a date range to search from {atbat_count:,} historical at-bats.")
 
 # Date range and refresh controls in one row
 col1, col2, col3 = st.columns(3)
@@ -332,12 +331,18 @@ with col2:
         max_value=datetime.today()
     )
 with col3:
-    # Show most recent date
+    # Show most recent date and refresh button
     most_recent = get_most_recent_date()
+    
+    # Create help text that includes the latest date
+    label_text = "🔄 Refresh Data"
+    help_text = "Data typically available 12-24 hours after games"
     if most_recent:
-        st.caption(f"Latest: {most_recent.date()}")
+        # help_text += f" | Latest: {most_recent.date()}"
+        label_text += f" | Latest: {most_recent.date()}"
 
-    if st.button("🔄 Refresh Recent Data", type="secondary", key="refresh_button"):
+    if st.button(label_text, type="secondary", key="refresh_button", 
+    help=help_text):
         with st.spinner("Refreshing recent data..."):
             success, message = refresh_recent_data()
             if success:
