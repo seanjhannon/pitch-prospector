@@ -510,83 +510,48 @@ if submitted:
 
                     pitch_level_data = get_pitch_sequences_for_atbat_official(row["id"])
 
-                    # Mobile-responsive card layout
-                    st.markdown(
-                        f"""
-                        <div style="
-                            border: 1px solid #ddd; 
-                            border-radius: 10px; 
-                            padding: 20px; 
-                            margin: 10px 0; 
-                            background: white;
-                            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-                        ">
-                            <div style="text-align: center; margin-bottom: 15px;">
-                                <h3 style="margin: 0; color: #333;">{row['pitcher_name'].title()} vs {row['batter_name'].title()}</h3>
-                                <p style="margin: 5px 0; color: #666; font-size: 14px;">{pd.to_datetime(row['game_date']):%B %d, %Y}</p>
-                            </div>
-                            
-                            <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px;">
-                                <!-- Pitcher -->
-                                <div style="text-align: center; min-width: 60px;">
-                                    <img src="{row['pitcher_img']}" style="width: 50px; height: 50px; border-radius: 50%; object-fit: cover;" onerror="this.style.display='none'">
-                                    <p style="margin: 5px 0; font-size: 12px; color: #666;">Pitcher</p>
-                                </div>
-                                
-                                <!-- Pitch Sequence -->
-                                <div style="flex: 1; display: flex; justify-content: center; gap: 8px; flex-wrap: wrap;">
-                        """,
-                        unsafe_allow_html=True
-                    )
-                    
-                    # Display pitch sequence
-                    for i, pitch in enumerate(pitch_level_data):
-                        st.markdown(
-                            f"""
-                            <div style="
-                                background: #f8f9fa; 
-                                border: 1px solid #dee2e6; 
-                                border-radius: 6px; 
-                                padding: 8px; 
-                                text-align: center; 
-                                min-width: 60px;
-                                font-size: 12px;
-                            ">
-                                <div style="font-weight: bold; color: #495057;">{pitch['pitch_type']}</div>
-                                <div style="color: #6c757d;">{pitch['release_speed']} mph</div>
-                                <div style="color: #6c757d;">Zone {int(pitch.get('zone', '–'))}</div>
-                            </div>
-                            """,
-                            unsafe_allow_html=True
-                        )
-                    
-                    st.markdown(
-                        f"""
-                                </div>
-                                
-                                <!-- Batter -->
-                                <div style="text-align: center; min-width: 60px;">
-                                    <img src="{row['batter_img']}" style="width: 50px; height: 50px; border-radius: 50%; object-fit: cover;" onerror="this.style.display='none'">
-                                    <p style="margin: 5px 0; font-size: 12px; color: #666;">Batter</p>
-                                </div>
-                            </div>
-                            
-                            <div style="text-align: center; margin-top: 15px;">
-                                <a href="{row['statcast_url']}" target="_blank" style="
-                                    background: #007bff; 
-                                    color: white; 
-                                    padding: 8px 16px; 
-                                    text-decoration: none; 
-                                    border-radius: 5px; 
-                                    font-size: 14px;
-                                    display: inline-block;
-                                ">🔗 Watch on Statcast</a>
-                            </div>
-                        </div>
-                        """,
-                        unsafe_allow_html=True
-                    )
-                    st.markdown("---")
+                    # Create a card-like container using Streamlit components
+                    with st.container():
+                        # Card header
+                        st.markdown(f"### {row['pitcher_name'].title()} vs {row['batter_name'].title()} | {pd.to_datetime(row['game_date']):%B %d, %Y}")
+                        
+                        # Main content area with columns
+                        col1, col2, col3 = st.columns([1, 3, 1])
+                        
+                        with col1:
+                            try:
+                                st.image(row["pitcher_img"], width=60)
+                            except:
+                                st.markdown("🫥")
+                        
+                        with col2:
+                            # Display pitches in a horizontal layout
+                            if len(pitch_level_data) <= 4:
+                                # For 4 or fewer pitches, use columns
+                                pitch_cols = st.columns(len(pitch_level_data))
+                                for i, pitch in enumerate(pitch_level_data):
+                                    with pitch_cols[i]:
+                                        st.markdown(f"**{pitch['pitch_type']}**")
+                                        st.markdown(f"{pitch['release_speed']} mph")
+                                        st.markdown(f"Zone {int(pitch.get('zone', '–'))}")
+                            else:
+                                # For more pitches, stack them
+                                for i, pitch in enumerate(pitch_level_data):
+                                    with st.expander(f"Pitch {i+1}: {pitch['pitch_type']}", expanded=True):
+                                        st.markdown(f"**Speed:** {pitch['release_speed']} mph")
+                                        st.markdown(f"**Zone:** {int(pitch.get('zone', '–'))}")
+                        
+                        with col3:
+                            try:
+                                st.image(row["batter_img"], width=60)
+                            except:
+                                st.markdown("🫥")
+                        
+                        # Statcast link
+                        st.markdown(f"[🔗 Watch on Savant]({row['statcast_url']})")
+                        
+                        # Divider
+                        st.divider()
             else:
                 st.subheader("No matching at-bats found.")
                 
