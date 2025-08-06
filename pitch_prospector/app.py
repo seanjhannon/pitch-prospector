@@ -384,8 +384,26 @@ ALL_OUTCOMES = [
 all_pitches = sorted(PITCH_TYPE_MAP.keys())
 all_outcomes = sorted(ALL_OUTCOMES)
 
+# Initialize session state for number of pitches
+if 'num_pitches' not in st.session_state:
+    st.session_state.num_pitches = 3
+
+# Number of pitches selector (outside form for instant updates)
+num_pitches = st.number_input(
+    "Number of pitches in sequence", 
+    min_value=1, 
+    max_value=10, 
+    value=st.session_state.num_pitches,
+    key="num_pitches_input"
+)
+
+# Update session state when number changes
+if num_pitches != st.session_state.num_pitches:
+    st.session_state.num_pitches = num_pitches
+    st.rerun()
+
+# Pitch sequence form
 with st.form("pitch_sequence_form"):
-    num_pitches = st.number_input("Number of pitches in sequence", min_value=1, max_value=10, value=3)
     pitch_inputs = []
     outcome_inputs = []
 
