@@ -6,7 +6,7 @@ st.title("🐔 CockroachDB Connection Test (Safe)")
 
 # Use system trusted roots instead of custom certificate
 # This fixes the "certificate file not found" error in Streamlit Cloud
-dsn = 'postgresql://sean:_GS_iQHq4ZjjvwA4-VBqcQ@pitches-8229.jxf.gcp-us-west2.cockroachlabs.cloud:26257/defaultdb?sslmode=require'
+dsn = 'postgresql://sean:5lyC6VuWmUnEGOV85DsChQ@pitches-8229.jxf.gcp-us-west2.cockroachlabs.cloud:26257/defaultdb?sslmode=require'
 
 st.write("🔧 **Authentication Fix:** Using `sslmode=require` with system certificates")
 st.write("📁 **No local certificate file needed** - works in Streamlit Cloud")
