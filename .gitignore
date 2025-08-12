@@ -1,4 +1,5 @@
-# Ignore SQLite database
+# Ignore SQL File
+*.sql
 
 secrets.toml
 *.env
