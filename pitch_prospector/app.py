@@ -6,6 +6,7 @@ import warnings
 from dotenv import load_dotenv
 import os
 import time
+import psycopg
 from pitch_prospector.error_handling import (
     handle_database_errors, handle_player_lookup_errors, 
     validate_date_range, validate_pitch_sequence,
@@ -15,17 +16,39 @@ from pitch_prospector.error_handling import (
 # Load environment variables
 load_dotenv()
 
-from st_supabase_connection import SupabaseConnection
-
-# Initialize connection.
-conn = st.connection("supabase",type=SupabaseConnection)
+# Initialize CockroachDB connection
+def get_cockroach_connection():
+    """Get a connection to CockroachDB."""
+    try:
+        # Try Streamlit secrets first (cloud)
+        host = st.secrets["cockroachdb"]["host"]
+        port = st.secrets["cockroachdb"]["port"]
+        database = st.secrets["cockroachdb"]["database"]
+        user = st.secrets["cockroachdb"]["user"]
+        password = st.secrets["cockroachdb"]["password"]
+    except KeyError:
+        # Fall back to environment variables (local)
+        host = os.getenv("COCKROACH_HOST")
+        port = os.getenv("COCKROACH_PORT")
+        database = os.getenv("COCKROACH_DATABASE")
+        user = os.getenv("COCKROACH_USER")
+        password = os.getenv("COCKROACH_PASSWORD")
+    
+    # For local development, use IP with cluster identifier
+    if host == "34.94.157.111":
+        dsn = f'postgresql://{user}:{password}@{host}:{port}/pitches-8229.{database}?sslmode=require'
+    else:
+        # For cloud, use hostname with standard format
+        dsn = f'postgresql://{user}:{password}@{host}:{port}/{database}?sslmode=require'
+    
+    return psycopg.connect(dsn)
 
 warnings.filterwarnings("ignore", category=FutureWarning)
 
-# --- Helper functions using official Supabase connection ---
+# --- Helper functions using CockroachDB connection ---
 def get_atbats_by_date_and_sequence_official(start_date, end_date, pitch_sequence):
     """
-    Fetch atbats with specific date range and pitch sequence using official connection.
+    Fetch atbats with specific date range and pitch sequence using CockroachDB connection.
     pitch_sequence should be a list of [pitch_type, outcome] lists (matches database format).
     """
     try:
@@ -34,19 +57,44 @@ def get_atbats_by_date_and_sequence_official(start_date, end_date, pitch_sequenc
         # First, get at-bats in the date range with a reasonable limit
         # Start with a smaller limit to avoid overwhelming the connection
         limit = 10000
-        result = conn.table("atbats_optimized").select(
-            "id, game_pk, at_bat_number, game_date, batter, pitcher, inning, pitch_sequence"
-        ).gte("game_date", start_date).lte("game_date", end_date).limit(limit).execute()
         
-        if not result.data:
+        with get_cockroach_connection() as conn:
+            with conn.cursor() as cur:
+                # Query with date range and limit
+                cur.execute("""
+                    SELECT id, game_pk, at_bat_number, game_date, batter, pitcher, inning, pitch_sequence
+                    FROM atbats_optimized 
+                    WHERE game_date >= %s AND game_date <= %s
+                    ORDER BY game_date DESC
+                    LIMIT %s
+                """, (start_date, end_date, limit))
+                
+                result_data = cur.fetchall()
+        
+        if not result_data:
             print(f"  ❌ No data found in date range {start_date} to {end_date}")
             return []
         
-        print(f"  📊 Retrieved {len(result.data)} at-bats (limited to {limit})")
+        print(f"  📊 Retrieved {len(result_data)} at-bats (limited to {limit})")
+        
+        # Convert to the same format as before
+        atbats = []
+        for row in result_data:
+            atbat = {
+                'id': row[0],
+                'game_pk': row[1],
+                'at_bat_number': row[2],
+                'game_date': row[3],
+                'batter': row[4],
+                'pitcher': row[5],
+                'inning': row[6],
+                'pitch_sequence': row[7]
+            }
+            atbats.append(atbat)
         
         # Filter in Python to match the exact sequence
         matching_atbats = []
-        for atbat in result.data:
+        for atbat in atbats:
             stored_sequence = atbat.get('pitch_sequence', [])
             if stored_sequence == pitch_sequence:
                 matching_atbats.append(atbat)
@@ -59,7 +107,7 @@ def get_atbats_by_date_and_sequence_official(start_date, end_date, pitch_sequenc
         
         # If no matches found, let's debug by showing some sample sequences
         print(f"  🔍 Debug: No exact matches found. Sample sequences from database:")
-        for i, atbat in enumerate(result.data[:3]):
+        for i, atbat in enumerate(atbats[:3]):
             sequence = atbat.get('pitch_sequence', [])
             print(f"    {i+1}. {sequence}")
         
@@ -67,7 +115,7 @@ def get_atbats_by_date_and_sequence_official(start_date, end_date, pitch_sequenc
         first_pitch = pitch_sequence[0] if pitch_sequence else None
         if first_pitch:
             similar_sequences = []
-            for atbat in result.data:
+            for atbat in atbats:
                 stored_sequence = atbat.get('pitch_sequence', [])
                 if stored_sequence and len(stored_sequence) > 0 and stored_sequence[0] == first_pitch:
                     similar_sequences.append(stored_sequence)
@@ -86,18 +134,22 @@ def get_atbats_by_date_and_sequence_official(start_date, end_date, pitch_sequenc
 
 def get_pitch_sequences_for_atbat_official(atbat_id):
     """
-    Fetch pitch sequence data for a specific at-bat using official connection.
+    Fetch pitch sequence data for a specific at-bat using CockroachDB connection.
     """
     try:
-        # Use the correct API for st-supabase-connection
-        result = conn.table("atbats_optimized").select(
-            "pitch_sequence, pitch_data"
-        ).eq("id", atbat_id).execute()
+        with get_cockroach_connection() as conn:
+            with conn.cursor() as cur:
+                cur.execute("""
+                    SELECT pitch_sequence, pitch_data
+                    FROM atbats_optimized 
+                    WHERE id = %s
+                """, (atbat_id,))
+                
+                result = cur.fetchone()
         
-        if result.data and len(result.data) > 0:
-            row = result.data[0]
-            pitch_sequence = row.get('pitch_sequence', [])
-            pitch_data = row.get('pitch_data', [])
+        if result:
+            pitch_sequence = result[0]
+            pitch_data = result[1]
             
             # Combine pitch sequence with pitch data
             combined_data = []
@@ -126,9 +178,18 @@ def get_pitch_sequences_for_atbat_official(atbat_id):
 def get_most_recent_date():
     """Get the most recent date in the database."""
     try:
-        result = conn.table("atbats_optimized").select("game_date").order("game_date", desc=True).limit(1).execute()
-        if result.data:
-            most_recent_date = pd.to_datetime(result.data[0]['game_date'])
+        with get_cockroach_connection() as conn:
+            with conn.cursor() as cur:
+                cur.execute("""
+                    SELECT game_date 
+                    FROM atbats_optimized 
+                    ORDER BY game_date DESC 
+                    LIMIT 1
+                """)
+                result = cur.fetchone()
+                
+        if result:
+            most_recent_date = pd.to_datetime(result[0])
             return most_recent_date
         return None
     except Exception as e:
@@ -204,10 +265,27 @@ def insert_atbats_with_duplicate_prevention(atbats, batch_size=50):
         
         try:
             # Use upsert to handle duplicates automatically
-            result = conn.table("atbats_optimized").upsert(batch, count="exact").execute()
-            inserted_count = result.count if result.count is not None else len(batch)
-            total_inserted += inserted_count
-            print(f"  ✅ Batch {i//batch_size + 1}: Inserted {inserted_count} at-bats")
+            with get_cockroach_connection() as conn:
+                with conn.cursor() as cur:
+                    # Prepare the upsert query
+                    upsert_query = """
+                        INSERT INTO atbats_optimized (game_pk, at_bat_number, game_date, batter, pitcher, inning, pitch_sequence, pitch_data)
+                        VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
+                        ON CONFLICT (id) DO UPDATE SET
+                            game_pk = EXCLUDED.game_pk,
+                            at_bat_number = EXCLUDED.at_bat_number,
+                            game_date = EXCLUDED.game_date,
+                            batter = EXCLUDED.batter,
+                            pitcher = EXCLUDED.pitcher,
+                            inning = EXCLUDED.inning,
+                            pitch_sequence = EXCLUDED.pitch_sequence,
+                            pitch_data = EXCLUDED.pitch_data
+                    """
+                    cur.executemany(upsert_query, batch)
+                    conn.commit()
+                    inserted_count = cur.rowcount
+                    total_inserted += inserted_count
+                    print(f"  ✅ Batch {i//batch_size + 1}: Inserted {inserted_count} at-bats")
             
             # Small delay to avoid overwhelming the connection
             time.sleep(0.1)
@@ -273,17 +351,14 @@ def db_is_available():
     
     try:
         # Use the official Supabase connection to check if database has data
-        result = conn.table("atbats_optimized").select("id", count="exact").limit(1).execute()
-        
-        if result.count is not None:
-            count = result.count
-            print(f"  📊 Found {count} records in database")
-            has_data = count > 0
-            print(f"  ✅ Database availability check completed in {time.time() - start_time:.2f}s")
-            return has_data, count
-        else:
-            print("  ❌ Database query returned no results")
-            return False, 0
+        with get_cockroach_connection() as conn:
+            with conn.cursor() as cur:
+                cur.execute("SELECT COUNT(*) FROM atbats_optimized")
+                count = cur.fetchone()[0]
+                print(f"  📊 Found {count} records in database")
+                has_data = count > 0
+                print(f"  ✅ Database availability check completed in {time.time() - start_time:.2f}s")
+                return has_data, count
     except Exception as e:
         print(f"  ❌ Database connection failed: {e}")
         return False, 0
