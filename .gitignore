@@ -2,7 +2,7 @@
 *.sql
 
 secrets.toml
-*.env
+.env
 
 # Development and population scripts
 scripts/populate_to_target_size_v3.py
