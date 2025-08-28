@@ -34,12 +34,8 @@ def get_cockroach_connection():
         user = os.getenv("COCKROACH_USER")
         password = os.getenv("COCKROACH_PASSWORD")
     
-    # For local development, use IP with cluster identifier
-    if host == "34.94.157.111":
-        dsn = f'postgresql://{user}:{password}@{host}:{port}/pitches-8229.{database}?sslmode=require'
-    else:
-        # For cloud, use hostname with standard format
-        dsn = f'postgresql://{user}:{password}@{host}:{port}/{database}?sslmode=require'
+    # Use standard connection string format
+    dsn = f'postgresql://{user}:{password}@{host}:{port}/{database}?sslmode=require'
     
     return psycopg.connect(dsn)
 
