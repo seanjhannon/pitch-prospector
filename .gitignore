@@ -5,11 +5,7 @@ secrets.toml
 .env
 
 # Development and population scripts
-scripts/populate_to_target_size_v3.py
-scripts/debug_statcast_lag.py
-scripts/check_date_range.py
-scripts/optimized_data_pipeline.py
-population_log.txt
+# (All migration scripts have been removed)
 
 # Python cache
 __pycache__/
@@ -33,4 +29,5 @@ env/
 # OS files
 .DS_Store
 Thumbs.db
+.env
 .env
