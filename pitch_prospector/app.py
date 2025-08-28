@@ -54,30 +54,62 @@ def get_atbats_by_date_and_sequence_official(start_date, end_date, pitch_sequenc
     try:
         print(f"🔍 Searching for sequence: {pitch_sequence}")
         
-        # First, get at-bats in the date range with a reasonable limit
-        # Start with a smaller limit to avoid overwhelming the connection
-        limit = 10000
-        
         with get_cockroach_connection() as conn:
             with conn.cursor() as cur:
-                # Query with date range and limit
+                # Use database-level filtering for exact sequence match
+                # This is much more efficient than fetching and filtering in Python
+                # Convert the sequence to proper JSON format for the query
+                import json
+                sequence_json = json.dumps(pitch_sequence)
+                
                 cur.execute("""
                     SELECT id, game_pk, at_bat_number, game_date, batter, pitcher, inning, pitch_sequence
                     FROM atbats_optimized 
-                    WHERE game_date >= %s AND game_date <= %s
+                    WHERE game_date >= %s 
+                    AND game_date <= %s
+                    AND pitch_sequence = %s::jsonb
                     ORDER BY game_date DESC
-                    LIMIT %s
-                """, (start_date, end_date, limit))
+                    LIMIT 1000
+                """, (start_date, end_date, sequence_json))
                 
                 result_data = cur.fetchall()
         
         if not result_data:
-            print(f"  ❌ No data found in date range {start_date} to {end_date}")
+            print(f"  ❌ No exact sequence matches found in date range {start_date} to {end_date}")
+            
+            # Debug: Check if the sequence exists at all in the database
+            with get_cockroach_connection() as conn:
+                with conn.cursor() as cur:
+                    cur.execute("""
+                        SELECT COUNT(*) 
+                        FROM atbats_optimized 
+                        WHERE pitch_sequence = %s::jsonb
+                    """, (sequence_json,))
+                    
+                    total_matches = cur.fetchone()[0]
+                    print(f"  🔍 Debug: Found {total_matches} total matches for this sequence across all dates")
+                    
+                    if total_matches > 0:
+                        # Check what dates these matches occur in
+                        cur.execute("""
+                            SELECT MIN(game_date), MAX(game_date), COUNT(*)
+                            FROM atbats_optimized 
+                            WHERE pitch_sequence = %s
+                            GROUP BY DATE_TRUNC('year', game_date)
+                            ORDER BY DATE_TRUNC('year', game_date) DESC
+                            LIMIT 5
+                        """)
+                        
+                        year_counts = cur.fetchall()
+                        print(f"  🔍 Debug: Sequence found in these years:")
+                        for min_date, max_date, count in year_counts:
+                            print(f"    {min_date.year}: {count:,} matches")
+            
             return []
         
-        print(f"  📊 Retrieved {len(result_data)} at-bats (limited to {limit})")
+        print(f"  ✅ Found {len(result_data)} exact sequence matches")
         
-        # Convert to the same format as before
+        # Convert to the expected format
         atbats = []
         for row in result_data:
             atbat = {
@@ -92,44 +124,12 @@ def get_atbats_by_date_and_sequence_official(start_date, end_date, pitch_sequenc
             }
             atbats.append(atbat)
         
-        # Filter in Python to match the exact sequence
-        matching_atbats = []
-        for atbat in atbats:
-            stored_sequence = atbat.get('pitch_sequence', [])
-            if stored_sequence == pitch_sequence:
-                matching_atbats.append(atbat)
-        
-        print(f"  ✅ Found {len(matching_atbats)} exact matches")
-        
-        # If we found matches, return them
-        if matching_atbats:
-            return matching_atbats
-        
-        # If no matches found, let's debug by showing some sample sequences
-        print(f"  🔍 Debug: No exact matches found. Sample sequences from database:")
-        for i, atbat in enumerate(atbats[:3]):
-            sequence = atbat.get('pitch_sequence', [])
-            print(f"    {i+1}. {sequence}")
-        
-        # Also check if we have any sequences that start with the same pitch
-        first_pitch = pitch_sequence[0] if pitch_sequence else None
-        if first_pitch:
-            similar_sequences = []
-            for atbat in atbats:
-                stored_sequence = atbat.get('pitch_sequence', [])
-                if stored_sequence and len(stored_sequence) > 0 and stored_sequence[0] == first_pitch:
-                    similar_sequences.append(stored_sequence)
-            
-            if similar_sequences:
-                print(f"  🔍 Found {len(similar_sequences)} sequences starting with {first_pitch}")
-                print(f"  🔍 Sample similar sequences:")
-                for i, seq in enumerate(similar_sequences[:3]):
-                    print(f"    {i+1}. {seq}")
-        
-        return matching_atbats
+        return atbats
         
     except Exception as e:
         print(f"❌ Error querying atbats: {e}")
+        import traceback
+        traceback.print_exc()
         return []
 
 def get_pitch_sequences_for_atbat_official(atbat_id):
