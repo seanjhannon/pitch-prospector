@@ -26,6 +26,9 @@ def get_cockroach_connection():
         database = st.secrets["cockroachdb"]["database"]
         user = st.secrets["cockroachdb"]["user"]
         password = st.secrets["cockroachdb"]["password"]
+        
+        # Check if we need cluster identifier format (can be configured in secrets)
+        cluster_id = st.secrets["cockroachdb"].get("cluster_id", "")
     except KeyError:
         # Fall back to environment variables (local)
         host = os.getenv("COCKROACH_HOST")
@@ -33,9 +36,13 @@ def get_cockroach_connection():
         database = os.getenv("COCKROACH_DATABASE")
         user = os.getenv("COCKROACH_USER")
         password = os.getenv("COCKROACH_PASSWORD")
+        cluster_id = os.getenv("COCKROACH_CLUSTER_ID", "")
     
-    # Use standard connection string format
-    dsn = f'postgresql://{user}:{password}@{host}:{port}/{database}?sslmode=require'
+    # Use cluster identifier if specified, otherwise standard format
+    if cluster_id:
+        dsn = f'postgresql://{user}:{password}@{host}:{port}/{cluster_id}.{database}?sslmode=require'
+    else:
+        dsn = f'postgresql://{user}:{password}@{host}:{port}/{database}?sslmode=require'
     
     return psycopg.connect(dsn)
 
