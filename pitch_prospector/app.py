@@ -310,18 +310,6 @@ def get_atbats_by_date_and_sequence_official(start_date, end_date, pitch_sequenc
         
         print(f"  ✅ Found {len(result_data)} exact sequence matches")
         
-        # Check for potential duplicates in results
-        unique_keys = set()
-        duplicate_count = 0
-        for row in result_data:
-            key = (row[1], row[2], row[3])  # (game_pk, at_bat_number, game_date)
-            if key in unique_keys:
-                duplicate_count += 1
-            unique_keys.add(key)
-        
-        if duplicate_count > 0:
-            print(f"  ⚠️ Warning: Found {duplicate_count} potential duplicate at-bats in results")
-        
         # Convert to the expected format
         atbats = []
         for row in result_data:
@@ -722,23 +710,7 @@ with col3:
             else:
                 st.error(message)
     
-    # Debug and cleanup buttons (temporary)
-    col_debug1, col_debug2 = st.columns(2)
-    
-    with col_debug1:
-        if st.button("🐛 Debug Duplicates (FF, called_strike)", type="secondary", key="debug_button"):
-            with st.spinner("Analyzing database for duplicates..."):
-                debug_duplicate_atbats([["FF", "called_strike"]])
-                st.info("Check the console output for duplicate analysis")
-    
-    with col_debug2:
-        if st.button("🧹 Clean Up All Duplicates", type="secondary", key="cleanup_button"):
-            with st.spinner("Cleaning up duplicate at-bats..."):
-                deleted_count = cleanup_duplicate_atbats()
-                if deleted_count > 0:
-                    st.success(f"Cleaned up {deleted_count} duplicate records! Refresh the page to see updated counts.")
-                else:
-                    st.info("No duplicates found to clean up.")
+
 
 
 # Validate date range
