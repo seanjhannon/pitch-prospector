@@ -141,7 +141,7 @@ def get_atbats_by_date_and_sequence_official(start_date, end_date, pitch_sequenc
                 sequence_json = json.dumps(pitch_sequence)
                 
                 cur.execute("""
-                    SELECT id, game_pk, at_bat_number, game_date, batter, pitcher, inning, pitch_sequence
+                    SELECT DISTINCT id, game_pk, at_bat_number, game_date, batter, pitcher, inning, pitch_sequence
                     FROM atbats_optimized 
                     WHERE game_date >= %s 
                     AND game_date <= %s
@@ -186,6 +186,18 @@ def get_atbats_by_date_and_sequence_official(start_date, end_date, pitch_sequenc
             return []
         
         print(f"  ✅ Found {len(result_data)} exact sequence matches")
+        
+        # Check for potential duplicates in results
+        unique_keys = set()
+        duplicate_count = 0
+        for row in result_data:
+            key = (row[1], row[2], row[3])  # (game_pk, at_bat_number, game_date)
+            if key in unique_keys:
+                duplicate_count += 1
+            unique_keys.add(key)
+        
+        if duplicate_count > 0:
+            print(f"  ⚠️ Warning: Found {duplicate_count} potential duplicate at-bats in results")
         
         # Convert to the expected format
         atbats = []
@@ -359,14 +371,11 @@ def insert_atbats_with_duplicate_prevention(atbats, batch_size=150):
                 # Use upsert to handle duplicates automatically
                 with get_cockroach_connection() as conn:
                     with conn.cursor() as cur:
-                        # Prepare the upsert query
+                        # Prepare the upsert query - use natural key for conflict resolution
                         upsert_query = """
                             INSERT INTO atbats_optimized (game_pk, at_bat_number, game_date, batter, pitcher, inning, pitch_sequence, pitch_data)
                             VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
-                            ON CONFLICT (id) DO UPDATE SET
-                                game_pk = EXCLUDED.game_pk,
-                                at_bat_number = EXCLUDED.at_bat_number,
-                                game_date = EXCLUDED.game_date,
+                            ON CONFLICT (game_pk, at_bat_number, game_date) DO UPDATE SET
                                 batter = EXCLUDED.batter,
                                 pitcher = EXCLUDED.pitcher,
                                 inning = EXCLUDED.inning,
