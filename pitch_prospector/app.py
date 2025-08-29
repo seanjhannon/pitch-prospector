@@ -564,12 +564,17 @@ with col3:
     # Show most recent date and refresh button
     most_recent = get_most_recent_date()
     
-    # Create help text that includes the latest date
+    # Create help text that includes the latest date and last refresh info
     label_text = "🔄 Refresh Data"
     help_text = "Data typically available 12-24 hours after games"
     if most_recent:
-        # help_text += f" | Latest: {most_recent.date()}"
-        label_text += f" | Latest: {most_recent.date()}"
+        help_text += f" | Latest: {most_recent.date()}"
+    
+    # Add last manual refresh info to tooltip
+    if 'last_manual_refresh' in st.session_state:
+        help_text += f" | Last refresh: {st.session_state.last_manual_refresh}"
+    else:
+        help_text += " | No manual refresh yet"
 
     if st.button(label_text, type="secondary", key="refresh_button", 
     help=help_text):
@@ -584,12 +589,6 @@ with col3:
                 st.rerun()
             else:
                 st.error(message)
-    
-    # Show last manual refresh info
-    if 'last_manual_refresh' in st.session_state:
-        st.caption(f"Last manual refresh: {st.session_state.last_manual_refresh}")
-    else:
-        st.caption("No manual refresh yet")
 
 
 # Validate date range
