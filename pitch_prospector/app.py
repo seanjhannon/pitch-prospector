@@ -64,6 +64,78 @@ def run_daily_auto_refresh():
     """Run daily refresh once per day using Streamlit caching"""
     return auto_refresh_data()
 
+def cleanup_duplicate_atbats():
+    """Clean up existing duplicate at-bats by keeping only the most recent record for each unique at-bat."""
+    try:
+        print("🧹 Starting duplicate cleanup...")
+        
+        with get_cockroach_connection() as conn:
+            with conn.cursor() as cur:
+                # Find all duplicate at-bats based on natural key
+                cur.execute("""
+                    WITH duplicates AS (
+                        SELECT 
+                            game_pk, 
+                            at_bat_number, 
+                            game_date,
+                            COUNT(*) as count,
+                            MAX(id) as keep_id
+                        FROM atbats_optimized 
+                        GROUP BY game_pk, at_bat_number, game_date
+                        HAVING COUNT(*) > 1
+                    )
+                    SELECT 
+                        d.game_pk, 
+                        d.at_bat_number, 
+                        d.game_date, 
+                        d.count,
+                        d.keep_id,
+                        array_agg(a.id) as all_ids
+                    FROM duplicates d
+                    JOIN atbats_optimized a ON 
+                        d.game_pk = a.game_pk AND 
+                        d.at_bat_number = a.at_bat_number AND 
+                        d.game_date = a.game_date
+                    GROUP BY d.game_pk, d.at_bat_number, d.game_date, d.count, d.keep_id
+                    ORDER BY d.game_date DESC, d.game_pk, d.at_bat_number
+                """)
+                
+                duplicates = cur.fetchall()
+                
+                if not duplicates:
+                    print("✅ No duplicates found to clean up")
+                    return 0
+                
+                print(f"🧹 Found {len(duplicates)} duplicate at-bat groups to clean up")
+                
+                total_deleted = 0
+                for dup in duplicates:
+                    game_pk, at_bat_number, game_date, count, keep_id, all_ids = dup
+                    
+                    # Delete all records except the one with the highest ID (most recent)
+                    ids_to_delete = [str(id) for id in all_ids if id != keep_id]
+                    
+                    if ids_to_delete:
+                        delete_query = f"""
+                            DELETE FROM atbats_optimized 
+                            WHERE id IN ({','.join(ids_to_delete)})
+                        """
+                        cur.execute(delete_query)
+                        deleted_count = cur.rowcount
+                        total_deleted += deleted_count
+                        
+                        print(f"   🗑️ Game {game_pk}, AB {at_bat_number}, {game_date}: Deleted {deleted_count} duplicates, kept ID {keep_id}")
+                
+                conn.commit()
+                print(f"✅ Cleanup complete! Deleted {total_deleted} duplicate records")
+                return total_deleted
+                
+    except Exception as e:
+        print(f"❌ Error during cleanup: {e}")
+        import traceback
+        traceback.print_exc()
+        return 0
+
 def debug_duplicate_atbats(pitch_sequence):
     """Debug function to identify duplicate at-bats for a specific pitch sequence."""
     try:
@@ -650,11 +722,23 @@ with col3:
             else:
                 st.error(message)
     
-    # Debug duplicates button (temporary)
-    if st.button("🐛 Debug Duplicates (FF, called_strike)", type="secondary", key="debug_button"):
-        with st.spinner("Analyzing database for duplicates..."):
-            debug_duplicate_atbats([["FF", "called_strike"]])
-            st.info("Check the console output for duplicate analysis")
+    # Debug and cleanup buttons (temporary)
+    col_debug1, col_debug2 = st.columns(2)
+    
+    with col_debug1:
+        if st.button("🐛 Debug Duplicates (FF, called_strike)", type="secondary", key="debug_button"):
+            with st.spinner("Analyzing database for duplicates..."):
+                debug_duplicate_atbats([["FF", "called_strike"]])
+                st.info("Check the console output for duplicate analysis")
+    
+    with col_debug2:
+        if st.button("🧹 Clean Up All Duplicates", type="secondary", key="cleanup_button"):
+            with st.spinner("Cleaning up duplicate at-bats..."):
+                deleted_count = cleanup_duplicate_atbats()
+                if deleted_count > 0:
+                    st.success(f"Cleaned up {deleted_count} duplicate records! Refresh the page to see updated counts.")
+                else:
+                    st.info("No duplicates found to clean up.")
 
 
 # Validate date range
