@@ -541,16 +541,7 @@ st.title("Pitch Prospector ⚾️⛏️")
 st.markdown("*It's like Shazam for baseball!* ")
 st.markdown(f"**How to use:** Pick a date range, then build a pitch sequence by selecting pitch types and outcomes. Search {atbat_count:,} historical at-bats for a matching sequence and watch replays on Savant!")
 
-# Data freshness indicator (subtle, no auto-refresh mention)
-most_recent = get_most_recent_date()
-if most_recent:
-    hours_ago = (datetime.now() - most_recent).total_seconds() / 3600
-    if hours_ago < 24:
-        st.success(f"📊 Data current as of {hours_ago:.1f} hours ago")
-    elif hours_ago < 48:
-        st.info(f"📊 Data from {hours_ago:.1f} hours ago")
-    else:
-        st.info(f"📊 Data from {hours_ago:.1f} hours ago")
+
 
 
 # Date range and refresh controls in one row
