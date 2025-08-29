@@ -64,6 +64,57 @@ def run_daily_auto_refresh():
     """Run daily refresh once per day using Streamlit caching"""
     return auto_refresh_data()
 
+def debug_duplicate_atbats(pitch_sequence):
+    """Debug function to identify duplicate at-bats for a specific pitch sequence."""
+    try:
+        import json
+        sequence_json = json.dumps(pitch_sequence)
+        
+        with get_cockroach_connection() as conn:
+            with conn.cursor() as cur:
+                # Find all at-bats with this sequence
+                cur.execute("""
+                    SELECT id, game_pk, at_bat_number, game_date, batter, pitcher, inning, pitch_sequence
+                    FROM atbats_optimized 
+                    WHERE pitch_sequence = %s::jsonb
+                    ORDER BY game_date DESC, game_pk, at_bat_number
+                """, (sequence_json,))
+                
+                results = cur.fetchall()
+                
+                if not results:
+                    print(f"🔍 No at-bats found for sequence: {pitch_sequence}")
+                    return
+                
+                print(f"🔍 Found {len(results)} at-bats for sequence: {pitch_sequence}")
+                
+                # Check for duplicates based on natural key
+                seen_keys = set()
+                duplicates = []
+                
+                for row in results:
+                    key = (row[1], row[2], row[3])  # (game_pk, at_bat_number, game_date)
+                    if key in seen_keys:
+                        duplicates.append(row)
+                    seen_keys.add(key)
+                
+                if duplicates:
+                    print(f"⚠️ Found {len(duplicates)} duplicate at-bats:")
+                    for dup in duplicates:
+                        print(f"   ID: {dup[0]}, Game: {dup[1]}, AB: {dup[2]}, Date: {dup[3]}")
+                    
+                    # Show the first few results to see the pattern
+                    print(f"\n📊 First 10 results:")
+                    for i, row in enumerate(results[:10]):
+                        print(f"   {i+1}. ID: {row[0]}, Game: {row[1]}, AB: {row[2]}, Date: {row[3]}")
+                else:
+                    print("✅ No duplicates found in results")
+                    
+    except Exception as e:
+        print(f"❌ Error debugging duplicates: {e}")
+        import traceback
+        traceback.print_exc()
+
 # Background worker for continuous updates
 def background_refresh_worker():
     """Background worker that refreshes data periodically while app is running"""
@@ -598,6 +649,12 @@ with col3:
                 st.rerun()
             else:
                 st.error(message)
+    
+    # Debug duplicates button (temporary)
+    if st.button("🐛 Debug Duplicates (FF, called_strike)", type="secondary", key="debug_button"):
+        with st.spinner("Analyzing database for duplicates..."):
+            debug_duplicate_atbats([["FF", "called_strike"]])
+            st.info("Check the console output for duplicate analysis")
 
 
 # Validate date range
