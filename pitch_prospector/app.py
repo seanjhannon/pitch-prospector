@@ -16,6 +16,81 @@ from pitch_prospector.error_handling import (
 # Load environment variables
 load_dotenv()
 
+# --- Auto-refresh system ---
+def auto_refresh_data():
+    """Automatically refresh data daily using Streamlit caching"""
+    try:
+        # Get the most recent date in the database
+        most_recent_date = get_most_recent_date()
+        if not most_recent_date:
+            return False, "Could not determine most recent date"
+        
+        today = datetime.today().date()
+        
+        # Only refresh if we're more than 1 day behind
+        if most_recent_date.date() >= today - timedelta(days=1):
+            return True, f"Database is up to date (most recent: {most_recent_date.date()})"
+        
+        # Calculate the date range to fetch
+        start_date = most_recent_date + timedelta(days=1)
+        end_date = today
+        
+        # Fetch Statcast data
+        df = statcast(start_dt=str(start_date.date()), end_dt=str(end_date))
+        
+        if df.empty:
+            return True, f"No new data available for {start_date.date()} to {end_date}"
+        
+        # Process data
+        atbats = process_statcast_data_for_refresh(df)
+        
+        if not atbats:
+            return True, "No valid at-bats found in new data"
+        
+        # Insert data with duplicate prevention
+        inserted_count = insert_atbats_with_duplicate_prevention(atbats)
+        
+        if inserted_count > 0:
+            return True, f"Successfully refreshed data: {inserted_count:,} new at-bats added"
+        else:
+            return True, "No new at-bats were added (all were duplicates)"
+            
+    except Exception as e:
+        return False, f"Error refreshing data: {str(e)}"
+
+# Cache the auto-refresh function to run daily
+@st.cache_data(ttl=86400)  # Cache for 24 hours (86400 seconds)
+def run_daily_auto_refresh():
+    """Run auto-refresh once per day using Streamlit caching"""
+    return auto_refresh_data()
+
+# Background worker for continuous updates
+def background_refresh_worker():
+    """Background worker that refreshes data periodically while app is running"""
+    # Initial delay to let app start up completely
+    time.sleep(30)  # Wait 30 seconds after app starts
+    
+    while True:
+        try:
+            # Only run if we haven't refreshed recently
+            most_recent = get_most_recent_date()
+            if most_recent:
+                hours_since_last = (datetime.now() - most_recent).total_seconds() / 3600
+                if hours_since_last > 6:  # Only refresh if more than 6 hours old
+                    # Silent refresh - no user notification
+                    success, message = auto_refresh_data()
+                # No logging for skipped refreshes
+            
+            # Wait 6 hours before next check
+            time.sleep(21600)  # 6 hours = 21600 seconds
+            
+        except Exception as e:
+            # Only log errors for debugging, don't show to users
+            print(f"Background refresh error: {e}")
+            import traceback
+            traceback.print_exc()
+            time.sleep(3600)  # Wait 1 hour before retrying on error
+
 # Initialize CockroachDB connection
 def get_cockroach_connection():
     """Get a connection to CockroachDB."""
@@ -158,7 +233,7 @@ def get_pitch_sequences_for_atbat_official(atbat_id):
             combined_data = []
             for i, pitch_tuple in enumerate(pitch_sequence):
                 # Get corresponding pitch data (speed and zone)
-                speed, zone = pitch_data[i] if i < len(pitch_data) else [0, 0]
+                speed, zone = pitch_data[i] if i < len(pitch_data) else ['0', '0']
                 
                 # Extract pitch_type and description from tuple
                 if isinstance(pitch_tuple, (list, tuple)) and len(pitch_tuple) >= 2:
@@ -166,11 +241,19 @@ def get_pitch_sequences_for_atbat_official(atbat_id):
                 else:
                     pitch_type, description = str(pitch_tuple), 'unknown'
                 
+                # Convert string values back to appropriate types for display
+                try:
+                    release_speed = float(speed) if speed != '0' else 0
+                    zone_num = int(zone) if zone != '0' else 0
+                except (ValueError, TypeError):
+                    release_speed = 0
+                    zone_num = 0
+                
                 combined_data.append({
                     'pitch_type': pitch_type,
                     'description': description,
-                    'release_speed': speed,
-                    'zone': zone
+                    'release_speed': release_speed,
+                    'zone': zone_num
                 })
             return combined_data
         return []
@@ -233,10 +316,11 @@ def process_statcast_data_for_refresh(df):
             
             pitch_sequence.append([pitch_type, description])
             
-            # Extract speed and zone
-            speed = float(pitch.get('release_speed', 0)) if pd.notna(pitch.get('release_speed')) else 0
+            # Extract speed and zone - convert to strings for JSONB compatibility
+            speed = float(pitch.get('release_speed', 0)) if pd.notna(pitch.get('release_speed')) else 0.0
             zone = int(pitch.get('zone', 0)) if pd.notna(pitch.get('zone')) else 0
-            pitch_data.append([speed, zone])
+            # Convert to strings to avoid mixed-type array issues in JSONB
+            pitch_data.append([str(speed), str(zone)])
         
         # Create at-bat record
         first_pitch = atbat_group.iloc[0]
@@ -255,47 +339,80 @@ def process_statcast_data_for_refresh(df):
     
     return atbats
 
-def insert_atbats_with_duplicate_prevention(atbats, batch_size=50):
+def insert_atbats_with_duplicate_prevention(atbats, batch_size=150):
     """Insert at-bats with duplicate prevention using upsert."""
     if not atbats:
         return 0
     
     total_inserted = 0
+    total_batches = (len(atbats) + batch_size - 1) // batch_size
     
-    # Process in batches to avoid timeouts
-    for i in range(0, len(atbats), batch_size):
-        batch = atbats[i:i + batch_size]
-        
-        try:
-            # Use upsert to handle duplicates automatically
-            with get_cockroach_connection() as conn:
-                with conn.cursor() as cur:
-                    # Prepare the upsert query
-                    upsert_query = """
-                        INSERT INTO atbats_optimized (game_pk, at_bat_number, game_date, batter, pitcher, inning, pitch_sequence, pitch_data)
-                        VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
-                        ON CONFLICT (id) DO UPDATE SET
-                            game_pk = EXCLUDED.game_pk,
-                            at_bat_number = EXCLUDED.at_bat_number,
-                            game_date = EXCLUDED.game_date,
-                            batter = EXCLUDED.batter,
-                            pitcher = EXCLUDED.pitcher,
-                            inning = EXCLUDED.inning,
-                            pitch_sequence = EXCLUDED.pitch_sequence,
-                            pitch_data = EXCLUDED.pitch_data
-                    """
-                    cur.executemany(upsert_query, batch)
-                    conn.commit()
-                    inserted_count = cur.rowcount
-                    total_inserted += inserted_count
-                    print(f"  ✅ Batch {i//batch_size + 1}: Inserted {inserted_count} at-bats")
+    # Progress bar for batch processing
+    from tqdm import tqdm
+    with tqdm(total=total_batches, desc="Inserting at-bats", unit="batch") as pbar:
+        # Process in batches to avoid timeouts
+        for i in range(0, len(atbats), batch_size):
+            batch = atbats[i:i + batch_size]
+            batch_num = i // batch_size + 1
             
-            # Small delay to avoid overwhelming the connection
-            time.sleep(0.1)
-            
-        except Exception as e:
-            print(f"  ❌ Error inserting batch {i//batch_size + 1}: {e}")
-            continue
+            try:
+                # Use upsert to handle duplicates automatically
+                with get_cockroach_connection() as conn:
+                    with conn.cursor() as cur:
+                        # Prepare the upsert query
+                        upsert_query = """
+                            INSERT INTO atbats_optimized (game_pk, at_bat_number, game_date, batter, pitcher, inning, pitch_sequence, pitch_data)
+                            VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
+                            ON CONFLICT (id) DO UPDATE SET
+                                game_pk = EXCLUDED.game_pk,
+                                at_bat_number = EXCLUDED.at_bat_number,
+                                game_date = EXCLUDED.game_date,
+                                batter = EXCLUDED.batter,
+                                pitcher = EXCLUDED.pitcher,
+                                inning = EXCLUDED.inning,
+                                pitch_sequence = EXCLUDED.pitch_sequence,
+                                pitch_data = EXCLUDED.pitch_data
+                        """
+                        
+                        # Convert dictionary batch to tuple batch for executemany
+                        batch_tuples = []
+                        for atbat in batch:
+                            # Convert Python lists to JSON strings for PostgreSQL JSONB
+                            import json
+                            pitch_sequence_json = json.dumps(atbat['pitch_sequence'])
+                            pitch_data_json = json.dumps(atbat['pitch_data'])
+                            
+                            batch_tuples.append((
+                                atbat['game_pk'],
+                                atbat['at_bat_number'],
+                                atbat['game_date'],
+                                atbat['batter'],
+                                atbat['pitcher'],
+                                atbat['inning'],
+                                pitch_sequence_json,  # JSON string
+                                pitch_data_json       # JSON string
+                            ))
+                        
+                        cur.executemany(upsert_query, batch_tuples)
+                        conn.commit()
+                        inserted_count = cur.rowcount
+                        total_inserted += inserted_count
+                        
+                        # Update progress bar with batch info
+                        pbar.set_postfix({
+                            'Batch': f"{batch_num}/{total_batches}",
+                            'Inserted': inserted_count,
+                            'Total': total_inserted
+                        })
+                        pbar.update(1)
+                
+                # Small delay to avoid overwhelming the connection
+                time.sleep(0.05)  # Reduced delay since we increased batch size
+                
+            except Exception as e:
+                print(f"  ❌ Error inserting batch {batch_num}: {e}")
+                pbar.update(1)  # Still update progress bar even on error
+                continue
     
     return total_inserted
 
@@ -339,7 +456,7 @@ def refresh_recent_data():
         inserted_count = insert_atbats_with_duplicate_prevention(atbats)
         
         if inserted_count > 0:
-            return True, f"Successfully refreshed data: {inserted_count} new at-bats added"
+            return True, f"Successfully refreshed data: {inserted_count:,} new at-bats added"
         else:
             return True, "No new at-bats were added (all were duplicates)"
             
@@ -373,23 +490,67 @@ def get_current_season_range():
     end = today
     return start, end
 
-print("🚀 Starting app initialization...")
-app_start_time = time.time()
+# Prevent duplicate initialization
+if 'app_initialized' not in st.session_state:
+    st.session_state.app_initialized = True
+    
+    print("🚀 Starting app initialization...")
+    app_start_time = time.time()
 
-db_available, atbat_count = db_is_available()
-if db_available:
-    print("📊 Database has data, ready to use")
+    db_available, atbat_count = db_is_available()
+    if db_available:
+        print("📊 Database has data, ready to use")
+    else:
+        print("❌ Database is not available")
+        st.error("Database is not available. Please check your connection settings.")
+        st.stop()
+
+    print(f"🎉 App initialization completed in {time.time() - app_start_time:.2f}s")
+    
+    # Start background refresh system (non-blocking)
+    try:
+        # Start background worker for continuous updates (non-blocking)
+        import threading
+        refresh_thread = threading.Thread(target=background_refresh_worker, daemon=True)
+        refresh_thread.start()
+        
+        # Schedule daily auto-refresh to run in background (non-blocking)
+        def delayed_daily_refresh():
+            time.sleep(5)  # Wait 5 seconds after app starts
+            try:
+                auto_refresh_success, auto_refresh_message = run_daily_auto_refresh()
+            except Exception as e:
+                print(f"Background refresh error: {e}")
+        
+        daily_refresh_thread = threading.Thread(target=delayed_daily_refresh, daemon=True)
+        daily_refresh_thread.start()
+        
+        print("✅ Background refresh system started (non-blocking)")
+        
+    except Exception as e:
+        # Only log errors, don't show to users
+        print(f"Background refresh system error: {e}")
 else:
-    print("❌ Database is not available")
-    st.error("Database is not available. Please check your connection settings.")
-    st.stop()
+    # App already initialized, just get the count
+    db_available, atbat_count = db_is_available()
 
-print(f"🎉 App initialization completed in {time.time() - app_start_time:.2f}s")
+
 
 # --- UI ---
 st.title("Pitch Prospector ⚾️⛏️")
 st.markdown("*It's like Shazam for baseball!* ")
 st.markdown(f"**How to use:** Pick a date range, then build a pitch sequence by selecting pitch types and outcomes. Search {atbat_count:,} historical at-bats for a matching sequence and watch replays on Savant!")
+
+# Data freshness indicator (subtle, no auto-refresh mention)
+most_recent = get_most_recent_date()
+if most_recent:
+    hours_ago = (datetime.now() - most_recent).total_seconds() / 3600
+    if hours_ago < 24:
+        st.success(f"📊 Data current as of {hours_ago:.1f} hours ago")
+    elif hours_ago < 48:
+        st.info(f"📊 Data from {hours_ago:.1f} hours ago")
+    else:
+        st.info(f"📊 Data from {hours_ago:.1f} hours ago")
 
 
 # Date range and refresh controls in one row
@@ -422,6 +583,9 @@ with col3:
     if st.button(label_text, type="secondary", key="refresh_button", 
     help=help_text):
         with st.spinner("Refreshing recent data..."):
+            # Track manual refresh time
+            st.session_state.last_manual_refresh = datetime.now().strftime("%Y-%m-%d %H:%M")
+            
             success, message = refresh_recent_data()
             if success:
                 st.success(message)
@@ -429,6 +593,12 @@ with col3:
                 st.rerun()
             else:
                 st.error(message)
+    
+    # Show last manual refresh info
+    if 'last_manual_refresh' in st.session_state:
+        st.caption(f"Last manual refresh: {st.session_state.last_manual_refresh}")
+    else:
+        st.caption("No manual refresh yet")
 
 
 # Validate date range
