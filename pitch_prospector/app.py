@@ -16,7 +16,7 @@ from pitch_prospector.error_handling import (
 # Load environment variables
 load_dotenv()
 
-# --- Auto-refresh system ---
+# --- Background refresh system ---
 def auto_refresh_data():
     """Automatically refresh data daily using Streamlit caching"""
     try:
@@ -58,10 +58,10 @@ def auto_refresh_data():
     except Exception as e:
         return False, f"Error refreshing data: {str(e)}"
 
-# Cache the auto-refresh function to run daily
+# Cache the daily refresh function to run daily
 @st.cache_data(ttl=86400)  # Cache for 24 hours (86400 seconds)
 def run_daily_auto_refresh():
-    """Run auto-refresh once per day using Streamlit caching"""
+    """Run daily refresh once per day using Streamlit caching"""
     return auto_refresh_data()
 
 # Background worker for continuous updates
@@ -514,7 +514,7 @@ if 'app_initialized' not in st.session_state:
         refresh_thread = threading.Thread(target=background_refresh_worker, daemon=True)
         refresh_thread.start()
         
-        # Schedule daily auto-refresh to run in background (non-blocking)
+        # Schedule daily refresh to run in background (non-blocking)
         def delayed_daily_refresh():
             time.sleep(5)  # Wait 5 seconds after app starts
             try:
